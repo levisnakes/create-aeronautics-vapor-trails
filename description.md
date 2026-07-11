@@ -1,47 +1,32 @@
-# ✈️ Vapor Trails for Create Aeronautics
+# Vapor Trails
 
-**Your airships deserve an atmosphere.** Vapor Trails adds the missing air to Create
-Aeronautics — spinning propellers wear flickering vapor halos, engines cough smoke on startup,
-fast hulls rip condensation streaks off their wingtips, and low passes blast dust off the
-ground.
+Particle effects for Create Aeronautics ships. Propellers get vapor rings at the blade tips, engines smoke, fast ships pull condensation streaks off their wingtips, and low flyovers kick dust off the ground.
 
-**🖥️ 100% client-side — works on any server.** No server install, no packets, no config on the
-other end. Join any world running Create Aeronautics and only *you* need the mod.
+**Client-side only. Works on any server.** Nothing to install on the server, no packets sent. If the pack has Aeronautics, you get the effects.
 
-## 🌀 Propeller effects (the good stuff)
+## Propeller effects
 
-- **Blade-tip vapor halos** — past ~96 RPM, condensation puffs fire at the blade-tip radius,
-  timed to the blade pass, so every disc wears a flickering ring. Denser in rain and near the
-  cloud layer.
-- **Prop wash** — a cone of faint air swirls streams out behind every running disc, stretching
-  with RPM and airspeed.
-- **Takeoff dust & spray** — a running prop within 5 blocks of the surface kicks up a dust
-  ring on land or a spray ring on water. Low hovers finally *look* like low hovers.
-- **Startup/shutdown bursts** — engines catch with a punchy puff of smoke and vapor, and
-  wind down the same way.
+This is the main feature. Almost every Aeronautics ship is covered in propellers and in vanilla they just silently spin.
 
-Works on small propellers *and* big bearing-mounted sail props — anything Sable recognises as
-a propeller.
+- Spin a prop past ~96 RPM and condensation puffs fire at the blade-tip radius, timed to the blade pass. The disc gets a flickering ring around it. More visible in rain and near the cloud layer.
+- Running props blow a cone of faint air swirls out the back. Gets longer and stronger with RPM and airspeed.
+- A prop running within 5 blocks of the ground kicks up a dust ring under the disc. Over water it's a spray ring instead. Takeoffs and low hovers actually look like something now.
+- When a prop spins up from a standstill (or winds down), it coughs out a burst of smoke and vapor.
 
-## ☁️ And the rest of the sky
+Works on the small andesite/wooden props and on the big bearing-mounted sail props.
 
-- **Wingtip vapor trails** — white streaks off the ship's outer edges past 20 m/s, fading over
-  3–6 seconds
-- **Engine smoke** — light grey puffs while engines run, briefly dark and dense on ignition
-- **Hover dust** — block-appropriate debris under low ships: sand clouds, grass flecks, water
-  spray
-- **Water wakes** — V-shaped foam arms, churned stern foam and bow splash, scaled by speed and
-  hull width
-- **Cloud punch** — burst through the cloud deck at speed and leave a ring of mist
+## Everything else
 
-## ⚙️ Your sky, your rules
+- Wingtip trails: white streaks off the ship's outer edges above 20 m/s, fading over a few seconds
+- Engine smoke: grey puffs while running, briefly dark and thick on ignition
+- Hover dust: debris under low ships, matched to the block below (sand, grass, water spray)
+- Water wake: V-shaped foam trail, churned foam behind the stern, bow splash at speed
+- Cloud punch: a ring of mist when you break through the cloud layer at speed
 
-Everything is configurable — each effect has its own toggle, a 0–2× intensity slider, and its
-speed/RPM/altitude thresholds (client TOML + in-game config screen, no extra dependency).
-Particle output is budget-capped globally, per ship, and per propeller group, respects the
-vanilla Decreased/Minimal particle settings, and skips all work when no ships are loaded.
+## Config
 
-**Requires:** NeoForge 1.21.1 · Create Aeronautics (Sable). Without Sable installed the mod
-simply sleeps — safe to keep in any pack.
+Every effect has its own toggle, an intensity slider, and its speed/RPM/altitude thresholds. TOML plus an in-game config screen, no extra library needed. Particle counts are capped globally, per ship, and per propeller group, so a ten-prop gunship won't eat your framerate. The mod respects the vanilla Decreased/Minimal particle settings and does zero work when no ships are loaded.
 
-*MIT licensed. Not affiliated with the Create Aeronautics team.*
+Requires NeoForge 1.21.1 and Create Aeronautics (Sable). Without Sable installed the mod just sleeps, so it's safe to leave in any pack.
+
+MIT licensed. Not affiliated with the Create Aeronautics team.
