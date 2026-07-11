@@ -1,0 +1,62 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/levisnakes/create-aeronautics-vapor-trails/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+logoFile = "icon.png"
+authors = "Levi"
+displayURL = "https://github.com/levisnakes/create-aeronautics-vapor-trails"
+description = '''
+Client-side atmospheric particle effects for Create Aeronautics / Sable ships:
+wingtip vapor trails, propeller blade-tip vortices and prop wash, engine smoke,
+hover dust, water wakes and cloud-punch bursts. 100% client-side - works on any server.
+'''
+# Purely cosmetic client mod: join any server regardless of what it runs.
+displayTest = "IGNORE_SERVER_VERSION"
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neo_version},)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "CLIENT"
+
+# All soft dependencies: without Sable the mod simply does nothing.
+[[dependencies.${mod_id}]]
+modId = "sable"
+type = "optional"
+versionRange = "[1.0,)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.${mod_id}]]
+modId = "create"
+type = "optional"
+versionRange = "[6.0,)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.${mod_id}]]
+modId = "aeronautics"
+type = "optional"
+versionRange = "[1.0,)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.${mod_id}]]
+modId = "simulated"
+type = "optional"
+versionRange = "[1.0,)"
+ordering = "AFTER"
+side = "CLIENT"
