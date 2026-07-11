@@ -79,7 +79,7 @@ public final class PropellerFx {
         double density = Mth.clamp((rpm - thr) / Math.max(1.0, MAX_RPM - thr), 0.0, 1.0);
         double humid = humidityBoost(level, prop.pos().y);
         int blades = VTConfig.PROP_BLADES.get();
-        double perBlade = (0.30 + 0.70 * density) * humid * scale;
+        double perBlade = (0.9 + 1.1 * density) * humid * scale;
 
         double tipSpeed = 0.04 + 0.10 * (rpm / MAX_RPM);
         for (int k = 0; k < blades; k++) {
@@ -103,8 +103,8 @@ public final class PropellerFx {
                         tangent.x + ship.velocity().x * 0.15,
                         tangent.y + ship.velocity().y * 0.15,
                         tangent.z + ship.velocity().z * 0.15,
-                        0.28f + rng.nextFloat() * 0.12f, 7 + rng.nextInt(6),
-                        0.5f, 1.4f);
+                        0.55f + rng.nextFloat() * 0.25f, 10 + rng.nextInt(8),
+                        0.8f, 1.6f);
             }
         }
     }
@@ -118,7 +118,7 @@ public final class PropellerFx {
         double washSpeed = 0.12 + 0.40 * (rpm / MAX_RPM);
         // The wash cone also stretches with how fast the ship itself moves.
         double shipBoost = Mth.clamp(ship.speedMs() / 30.0, 0.0, 1.0);
-        double rate = (1.2 + 1.4 * (rpm / MAX_RPM) + shipBoost) * scale;
+        double rate = (2.5 + 3.0 * (rpm / MAX_RPM) + shipBoost * 2.0) * scale;
         int n = FxUtil.count(rng, rate);
         for (int i = 0; i < n; i++) {
             double angle = rng.nextDouble() * Mth.TWO_PI;
@@ -130,8 +130,8 @@ public final class PropellerFx {
                     .add(offset.normalize().scale(0.015))
                     .add(ship.velocity().scale(0.35));
             FxUtil.wash(level, true, start.x, start.y, start.z, vel.x, vel.y, vel.z,
-                    0.30f + (float) (r / Math.max(0.5, prop.radius())) * 0.25f,
-                    16 + rng.nextInt(14), 0.22f);
+                    0.55f + (float) (r / Math.max(0.5, prop.radius())) * 0.35f,
+                    18 + rng.nextInt(16), 0.45f);
         }
     }
 
@@ -148,7 +148,7 @@ public final class PropellerFx {
         double strength = Mth.clamp(1.0 - depth / range, 0.05, 1.0)
                 * (Math.abs(prop.rpm()) / MAX_RPM);
         double ringR = Math.max(1.0, prop.radius());
-        int n = FxUtil.count(rng, (2.0 + 4.0 * strength) * scale);
+        int n = FxUtil.count(rng, (4.0 + 8.0 * strength) * scale);
         for (int i = 0; i < n; i++) {
             double angle = rng.nextDouble() * Mth.TWO_PI;
             double r = ringR * (0.7 + rng.nextDouble() * 0.6);
@@ -167,7 +167,7 @@ public final class PropellerFx {
                         px, probe.surfaceY() + 0.15, pz, outX * 4.0, 0.8 * strength, outZ * 4.0);
                 if (rng.nextFloat() < 0.5f) {
                     FxUtil.wash(level, true, px, probe.surfaceY() + 0.3, pz, outX, 0.04, outZ,
-                            0.35f, 14 + rng.nextInt(8), 0.20f);
+                            0.6f, 16 + rng.nextInt(10), 0.4f);
                 }
             }
         }
@@ -179,7 +179,7 @@ public final class PropellerFx {
                               double scale, boolean startingUp) {
         Vec3 u = FxUtil.perpendicular(prop.axis());
         Vec3 w = prop.axis().cross(u).normalize();
-        int n = FxUtil.count(rng, (startingUp ? 16.0 : 9.0) * scale);
+        int n = FxUtil.count(rng, (startingUp ? 30.0 : 16.0) * scale);
         double r0 = Math.max(0.4, prop.radius() * 0.45);
         for (int i = 0; i < n; i++) {
             double angle = rng.nextDouble() * Mth.TWO_PI;
@@ -191,10 +191,10 @@ public final class PropellerFx {
                 // Denser grey smoke core: engines cough when they catch.
                 FxUtil.smokeVapor(level, true, 0.35f + rng.nextFloat() * 0.1f,
                         pos.x, pos.y, pos.z, vel.x, vel.y + 0.02, vel.z,
-                        0.45f + rng.nextFloat() * 0.25f, 22 + rng.nextInt(14), 0.55f, 1.6f);
+                        0.8f + rng.nextFloat() * 0.4f, 28 + rng.nextInt(16), 0.8f, 1.8f);
             } else {
                 FxUtil.vapor(level, true, pos.x, pos.y, pos.z, vel.x, vel.y, vel.z,
-                        0.40f + rng.nextFloat() * 0.30f, 16 + rng.nextInt(12), 0.5f, 1.8f);
+                        0.7f + rng.nextFloat() * 0.5f, 20 + rng.nextInt(14), 0.75f, 2.0f);
             }
         }
     }

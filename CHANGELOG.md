@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.1 — 2026-07-11
+
+Effects were too subtle to see in normal play. Big visibility pass:
+
+- Roughly doubled particle sizes and opacity across all effects
+- 2-3x spawn rates (wingtips, tip rings, wash, dust, wake, engine smoke, bursts)
+- Vapor fade-out is now linear instead of quadratic, so particles stay visible
+  for most of their life
+- Default budgets raised: maxParticles 800 -> 2000, perShipSpawnsPerTick 40 -> 90
+- Blade-tip ring default threshold lowered to 64 RPM
+- Delete `config/vaportrails-client.toml` to pick up the new defaults
+
 ## 1.0.0 — 2026-07-11
 
 Initial release.

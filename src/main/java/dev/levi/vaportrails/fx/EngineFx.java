@@ -34,7 +34,7 @@ public final class EngineFx {
             if (startup) {
                 st.startupTicks--;
             }
-            double rate = (startup ? 1.3 : 0.35) * scale;
+            double rate = (startup ? 2.5 : 0.8) * scale;
             int n = FxUtil.count(rng, rate);
             for (int i = 0; i < n; i++) {
                 double jx = (rng.nextDouble() - 0.5) * 0.6;
@@ -46,8 +46,8 @@ public final class EngineFx {
                         ship.velocity().x * 0.5 + (rng.nextDouble() - 0.5) * 0.01,
                         0.035 + rng.nextDouble() * 0.02 + ship.velocity().y * 0.5,
                         ship.velocity().z * 0.5 + (rng.nextDouble() - 0.5) * 0.01,
-                        (startup ? 0.55f : 0.40f) + rng.nextFloat() * 0.2f,
-                        30 + rng.nextInt(20), startup ? 0.6f : 0.45f, 1.3f);
+                        (startup ? 0.9f : 0.65f) + rng.nextFloat() * 0.3f,
+                        35 + rng.nextInt(25), startup ? 0.85f : 0.7f, 1.5f);
             }
             // Occasional vanilla smoke wisp for texture variety.
             if (rng.nextFloat() < 0.15f * scale) {

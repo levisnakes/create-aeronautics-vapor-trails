@@ -36,7 +36,7 @@ public final class WingtipFx {
 
         double density = Mth.clamp((ship.speedMs() - minSpeed) / Math.max(minSpeed, 1.0), 0.0, 1.0);
         double humid = PropellerFx.humidityBoost(level, ship.center().y);
-        double rate = (0.8 + 1.8 * density) * humid * scale;
+        double rate = (2.5 + 3.0 * density) * humid * scale;
 
         emitTip(level, ship, rng, tipA, dir, rate);
         emitTip(level, ship, rng, tipB, dir, rate);
@@ -73,9 +73,9 @@ public final class WingtipFx {
             FxUtil.vapor(level, false,
                     pos.x + jx, pos.y + jy, pos.z + jz,
                     ship.velocity().x * 0.12, ship.velocity().y * 0.12, ship.velocity().z * 0.12,
-                    0.5f + rng.nextFloat() * 0.4f,
+                    1.1f + rng.nextFloat() * 0.7f,
                     60 + rng.nextInt(60),                     // 3-6 seconds
-                    0.35f, 2.0f);
+                    0.65f, 2.2f);
         }
     }
 

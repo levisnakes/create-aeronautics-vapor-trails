@@ -62,7 +62,7 @@ public class VaporParticle extends TextureSheetParticle {
         // Quick fade-in, slow fade-out; grows as it disperses.
         float in = Math.min(1.0f, t * 8.0f);
         float out = 1.0f - t;
-        this.alpha = this.baseAlpha * in * out * out;
+        this.alpha = this.baseAlpha * in * out;
     }
 
     @Override

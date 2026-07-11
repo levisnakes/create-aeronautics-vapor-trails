@@ -60,7 +60,7 @@ public final class CloudPunchFx {
         double ringR = halfWidth * 1.2 + 1.0;
         double sizeF = Mth.clamp(halfWidth / 6.0, 0.5, 2.0);
 
-        int n = FxUtil.count(rng, 22.0 * sizeF * scale);
+        int n = FxUtil.count(rng, 40.0 * sizeF * scale);
         for (int i = 0; i < n; i++) {
             double angle = rng.nextDouble() * Mth.TWO_PI;
             double r = ringR * (0.8 + rng.nextDouble() * 0.4);
@@ -73,7 +73,7 @@ public final class CloudPunchFx {
                     Math.cos(angle) * out + ship.velocity().x * 0.15,
                     (rng.nextDouble() - 0.5) * 0.04,
                     Math.sin(angle) * out + ship.velocity().z * 0.15,
-                    1.4f + rng.nextFloat() * 1.0f, 30 + rng.nextInt(25), 0.40f, 2.2f);
+                    2.2f + rng.nextFloat() * 1.5f, 35 + rng.nextInt(30), 0.6f, 2.4f);
         }
         st.cloudCooldown = 40;
     }

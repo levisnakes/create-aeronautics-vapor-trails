@@ -57,9 +57,9 @@ public final class VTConfig {
         MASTER_INTENSITY = b.comment("Master multiplier applied to every effect's particle output.")
                 .defineInRange("masterIntensity", 1.0, 0.0, 2.0);
         MAX_PARTICLES = b.comment("Global cap on live Vapor Trails particles.")
-                .defineInRange("maxParticles", 800, 100, 4000);
+                .defineInRange("maxParticles", 2000, 100, 8000);
         PER_SHIP_SPAWNS_PER_TICK = b.comment("Cap on particles spawned per ship per tick.")
-                .defineInRange("perShipSpawnsPerTick", 40, 5, 200);
+                .defineInRange("perShipSpawnsPerTick", 90, 5, 400);
         PROPELLER_BUDGET_SHARE = b.comment(
                         "Share of a ship's per-tick particle budget reserved for propeller effects,",
                         "so many-propeller ships don't starve wingtip/wake effects.")
@@ -84,7 +84,7 @@ public final class VTConfig {
         PROP_TIP_ENABLED = b.comment("Blade-tip vapor ring on fast-spinning propellers.")
                 .define("bladeTipVapor", true);
         PROP_TIP_MIN_RPM = b.comment("Minimum rotation speed (Create RPM) for blade-tip vapor.")
-                .defineInRange("bladeTipMinRpm", 96.0, 1.0, 256.0);
+                .defineInRange("bladeTipMinRpm", 64.0, 1.0, 256.0);
         PROP_WASH_ENABLED = b.comment("Cone of faint air-swirl particles streaming behind the disc.")
                 .define("propWash", true);
         PROP_WASH_MIN_RPM = b.comment("Minimum rotation speed (Create RPM) for prop wash.")

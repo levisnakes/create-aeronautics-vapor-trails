@@ -61,7 +61,7 @@ public final class HoverDustFx {
             Vec3 out = new Vec3(px - ship.center().x, 0, pz - ship.center().z);
             out = out.lengthSqr() < 1.0e-4 ? new Vec3(1, 0, 0) : out.normalize();
 
-            int n = FxUtil.count(rng, (1.2 + 2.0 * strength) * scale);
+            int n = FxUtil.count(rng, (2.5 + 4.0 * strength) * scale);
             for (int i = 0; i < n; i++) {
                 double ox = out.x * (0.08 + rng.nextDouble() * 0.12 * strength);
                 double oz = out.z * (0.08 + rng.nextDouble() * 0.12 * strength);

@@ -53,7 +53,7 @@ public final class WaterWakeFx {
         // Kelvin wake half-angle is ~19.5 deg; the outward drift sets the V shape
         // as the ship leaves the foam behind.
         double outSpeed = Math.min(0.14, ship.velocity().horizontalDistance() * Math.tan(Math.toRadians(19.5)));
-        double sideRate = (1.0 + halfWidth * 0.35) * speedFrac * 1.6 * scale;
+        double sideRate = (1.5 + halfWidth * 0.5) * speedFrac * 2.2 * scale;
 
         for (int side = -1; side <= 1; side += 2) {
             int n = FxUtil.count(rng, sideRate);
@@ -63,7 +63,7 @@ public final class WaterWakeFx {
                 Vec3 vel = wing.scale(side * outSpeed * (0.7 + rng.nextDouble() * 0.6))
                         .subtract(dir.scale(0.01));
                 FxUtil.foam(level, false, pos.x, waterY + 0.03, pos.z, vel.x, vel.z,
-                        0.22f + rng.nextFloat() * 0.20f, 40 + rng.nextInt(30), 0.8f);
+                        0.40f + rng.nextFloat() * 0.30f, 40 + rng.nextInt(30), 0.9f);
             }
         }
 
@@ -74,7 +74,7 @@ public final class WaterWakeFx {
                     .subtract(dir.scale(rng.nextDouble() * 2.0));
             FxUtil.foam(level, false, pos.x, waterY + 0.03, pos.z,
                     (rng.nextDouble() - 0.5) * 0.02, (rng.nextDouble() - 0.5) * 0.02,
-                    0.28f + rng.nextFloat() * 0.25f, 60 + rng.nextInt(40), 0.7f);
+                    0.45f + rng.nextFloat() * 0.35f, 60 + rng.nextInt(40), 0.85f);
         }
 
         // Bow splash at speed.
