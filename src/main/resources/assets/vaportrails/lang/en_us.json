@@ -16,6 +16,7 @@
   "vaportrails.configuration.bladeTipMinRpm": "Blade-Tip Min RPM",
   "vaportrails.configuration.propWash": "Prop Wash",
   "vaportrails.configuration.propWashMinRpm": "Prop Wash Min RPM",
+  "vaportrails.configuration.invertPropWash": "Invert Prop Wash Direction",
   "vaportrails.configuration.groundDisturbance": "Ground/Water Disturbance",
   "vaportrails.configuration.groundDisturbanceRange": "Ground Disturbance Range",
   "vaportrails.configuration.startupPuff": "Startup/Shutdown Puff",

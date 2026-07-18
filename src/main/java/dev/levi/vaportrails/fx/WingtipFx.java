@@ -73,7 +73,7 @@ public final class WingtipFx {
             FxUtil.vapor(level, false,
                     pos.x + jx, pos.y + jy, pos.z + jz,
                     ship.velocity().x * 0.12, ship.velocity().y * 0.12, ship.velocity().z * 0.12,
-                    1.1f + rng.nextFloat() * 0.7f,
+                    0.65f + rng.nextFloat() * 0.4f,
                     60 + rng.nextInt(60),                     // 3-6 seconds
                     0.65f, 2.2f);
         }

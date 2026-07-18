@@ -126,10 +126,25 @@ final class ShipState {
             Vec3 worldPos = pose.transformPosition(discPlot);
             Vec3 axis = pose.transformNormal(new Vec3(facing.getStepX(), facing.getStepY(), facing.getStepZ()))
                     .normalize();
-            double rpm = Mods.CREATE ? CreateCompat.rpm(be) : (prop.isActive() ? 96.0 : 0.0);
+            double rpm;
+            boolean active = prop.isActive();
+            Vec3 washDir = null;
+            if (Mods.AERONAUTICS && AeroCompat.isBearing(be)) {
+                // Bearing (contraption) props: the client BE's kinetic speed is
+                // unreliable, so read the contraption's angular speed, and take
+                // the wash direction straight from its thrust vector.
+                rpm = AeroCompat.bearingRpm(be);
+                active = active || AeroCompat.bearingSpinning(be);
+                Vec3 thrustLocal = AeroCompat.bearingThrustDir(be);
+                if (thrustLocal != null) {
+                    washDir = pose.transformNormal(thrustLocal).normalize().scale(-1.0);
+                }
+            } else {
+                rpm = Mods.CREATE ? CreateCompat.rpm(be) : (prop.isActive() ? 96.0 : 0.0);
+            }
             double radius = Mods.AERONAUTICS ? AeroCompat.radius(be) : 1.5;
             props.add(new ShipCtx.PropCtx(worldPos, axis, radius, rpm, prop.getThrust(),
-                    prop.isActive(), propFx.get(plotPos)));
+                    active, washDir, propFx.get(plotPos)));
         }
 
         List<ShipCtx.EngineCtx> engines = engineBes.isEmpty() ? List.of() : new ArrayList<>(engineBes.size());

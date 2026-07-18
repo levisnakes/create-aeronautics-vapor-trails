@@ -25,6 +25,7 @@ public final class VTConfig {
     public static final ModConfigSpec.DoubleValue PROP_TIP_MIN_RPM;
     public static final ModConfigSpec.BooleanValue PROP_WASH_ENABLED;
     public static final ModConfigSpec.DoubleValue PROP_WASH_MIN_RPM;
+    public static final ModConfigSpec.BooleanValue PROP_WASH_INVERT;
     public static final ModConfigSpec.BooleanValue PROP_GROUND_ENABLED;
     public static final ModConfigSpec.DoubleValue PROP_GROUND_RANGE;
     public static final ModConfigSpec.BooleanValue PROP_STARTUP_ENABLED;
@@ -89,6 +90,10 @@ public final class VTConfig {
                 .define("propWash", true);
         PROP_WASH_MIN_RPM = b.comment("Minimum rotation speed (Create RPM) for prop wash.")
                 .defineInRange("propWashMinRpm", 32.0, 1.0, 256.0);
+        PROP_WASH_INVERT = b.comment(
+                        "Flip the prop wash direction. Use this if the air stream",
+                        "visibly blows out of the front of your propellers.")
+                .define("invertPropWash", false);
         PROP_GROUND_ENABLED = b.comment("Dust ring / water spray under a running propeller near the surface.")
                 .define("groundDisturbance", true);
         PROP_GROUND_RANGE = b.comment("How far below a propeller disc the ground/water is disturbed (blocks).")

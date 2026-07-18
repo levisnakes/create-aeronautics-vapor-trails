@@ -103,7 +103,7 @@ public final class PropellerFx {
                         tangent.x + ship.velocity().x * 0.15,
                         tangent.y + ship.velocity().y * 0.15,
                         tangent.z + ship.velocity().z * 0.15,
-                        0.55f + rng.nextFloat() * 0.25f, 10 + rng.nextInt(8),
+                        0.35f + rng.nextFloat() * 0.15f, 10 + rng.nextInt(8),
                         0.8f, 1.6f);
             }
         }
@@ -114,7 +114,13 @@ public final class PropellerFx {
     private static void wash(ClientLevel level, ShipCtx ship, ShipCtx.PropCtx prop,
                              RandomSource rng, double scale, Vec3 u, Vec3 w) {
         double rpm = Math.abs(prop.rpm());
-        Vec3 washDir = prop.axis().scale(-thrustSign(prop));
+        // Prefer the direction read straight from the propeller (bearing props);
+        // fall back to inferring from thrust/airflow signs for block props.
+        Vec3 washDir = prop.washDir() != null ? prop.washDir()
+                : prop.axis().scale(-thrustSign(prop));
+        if (VTConfig.PROP_WASH_INVERT.get()) {
+            washDir = washDir.scale(-1.0);
+        }
         double washSpeed = 0.12 + 0.40 * (rpm / MAX_RPM);
         // The wash cone also stretches with how fast the ship itself moves.
         double shipBoost = Mth.clamp(ship.speedMs() / 30.0, 0.0, 1.0);
@@ -205,9 +211,9 @@ public final class PropellerFx {
         if (Math.abs(prop.thrust()) > 1.0e-3) {
             return Math.signum(prop.thrust());
         }
-        if (Math.abs(prop.rpm()) > 1.0e-3) {
-            return Math.signum(prop.rpm());
-        }
+        // Don't guess from the RPM sign - that flips with gearing, not with the
+        // actual airflow. A constant is at least consistent per propeller, and
+        // the invertPropWash config can flip it globally.
         return 1.0;
     }
 

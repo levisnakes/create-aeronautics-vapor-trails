@@ -31,6 +31,49 @@ final class AeroCompat {
         return 1.5;
     }
 
+    static boolean isBearing(BlockEntity be) {
+        return be instanceof PropellerBearingBlockEntity;
+    }
+
+    /**
+     * Effective rotation speed for a bearing prop, in Create-RPM units. The
+     * client-side bearing BE can report 0 kinetic speed while its contraption
+     * visibly spins, so prefer the contraption's angular speed (deg/tick;
+     * Create visuals map speed -> speed * 0.3 deg/tick, hence / 0.3).
+     */
+    static double bearingRpm(BlockEntity be) {
+        if (!(be instanceof PropellerBearingBlockEntity bearing)) {
+            return 0.0;
+        }
+        float angular = bearing.getAngularSpeed();
+        if (Math.abs(angular) > 1.0e-3f) {
+            return angular / 0.3;
+        }
+        return bearing.getSpeed();
+    }
+
+    /** True when the bearing has an assembled, spinning blade contraption. */
+    static boolean bearingSpinning(BlockEntity be) {
+        return be instanceof PropellerBearingBlockEntity bearing
+                && bearing.getMovedContraption() != null
+                && Math.abs(bearing.getAngularSpeed()) > 1.0e-3f;
+    }
+
+    /**
+     * The bearing's own thrust direction (plot-local), or null. Air streams
+     * the opposite way, so this beats guessing from RPM signs.
+     */
+    static net.minecraft.world.phys.Vec3 bearingThrustDir(BlockEntity be) {
+        if (!(be instanceof PropellerBearingBlockEntity bearing)) {
+            return null;
+        }
+        org.joml.Vector3d t = bearing.thrustDirection;
+        if (t == null || t.lengthSquared() < 1.0e-6) {
+            return null;
+        }
+        return new net.minecraft.world.phys.Vec3(t.x, t.y, t.z).normalize();
+    }
+
     /** Distance from the hub block centre to the blade disc, along the facing. */
     static double discOffset(BlockEntity be) {
         if (be instanceof PropellerBearingBlockEntity) {

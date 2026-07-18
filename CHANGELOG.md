@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.2 — 2026-07-18
+
+- Propeller bearing (contraption) props now work properly: rotation speed is
+  read from the spinning contraption instead of the bearing's kinetic speed,
+  which reads 0 on the client
+- Prop wash direction for bearing props comes straight from the bearing's own
+  thrust vector instead of being guessed
+- Block props no longer guess wash direction from RPM sign (that flips with
+  gearing); new `invertPropWash` config option if your setup still blows the
+  wrong way
+- Condensation puffs (wingtip trails, blade-tip rings) are ~40% smaller
+
 ## 1.0.1 — 2026-07-11
 
 Effects were too subtle to see in normal play. Big visibility pass:
