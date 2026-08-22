@@ -95,6 +95,7 @@ final class SableTicker {
             }
 
             state.maybeRescan(sub);
+            state.stepHullScan(sub);
             ShipCtx ctx = state.buildCtx(sub);
             if (ctx == null) {
                 continue;

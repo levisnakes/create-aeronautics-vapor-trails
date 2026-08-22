@@ -17,6 +17,7 @@ public final class VTConfig {
     public static final ModConfigSpec.BooleanValue ADAPTIVE_QUALITY;
     public static final ModConfigSpec.IntValue TARGET_FPS;
     public static final ModConfigSpec.BooleanValue AIRFLOW_ENABLED;
+    public static final ModConfigSpec.BooleanValue HULL_SHAPE;
 
     // ---- shock cone ----
     public static final ModConfigSpec.BooleanValue SHOCK_ENABLED;
@@ -90,6 +91,12 @@ public final class VTConfig {
                         "nearby vapor, dust and foam around instead of every effect",
                         "drifting independently. Turn off for the old static behaviour.")
                 .define("airflowSimulation", true);
+        HULL_SHAPE = b.comment(
+                        "Scan each ship's blocks to find its real silhouette, so wingtip",
+                        "trails come off the actual wingtips and hover dust only rises",
+                        "from ground genuinely under the hull. Turning this off falls back",
+                        "to the bounding box, which is cheaper but boxy on odd airframes.")
+                .define("hullShapeScan", true);
         b.pop();
 
         b.push("wingtipTrails");

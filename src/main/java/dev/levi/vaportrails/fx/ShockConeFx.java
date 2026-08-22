@@ -36,8 +36,19 @@ public final class ShockConeFx {
         Vec3 w = dir.cross(u).normalize();
 
         AABB box = ship.bounds();
-        double halfLength = projectedHalfExtent(box, dir);
-        double girth = Math.max(1.5, averageGirth(box, u, w));
+        double halfLength;
+        double girth;
+        if (ship.hasShape()) {
+            Vec3 ld = ship.frame().dirToLocal(dir);
+            Vec3 lu = ship.frame().dirToLocal(u);
+            Vec3 lw = ship.frame().dirToLocal(w);
+            halfLength = ship.shape().halfExtent(ld.x, ld.z);
+            girth = Math.max(1.5, (ship.shape().halfExtent(lu.x, lu.z)
+                    + ship.shape().halfExtent(lw.x, lw.z)) * 0.5);
+        } else {
+            halfLength = projectedHalfExtent(box, dir);
+            girth = Math.max(1.5, averageGirth(box, u, w));
+        }
 
         // Faster means a tighter, further-back cone.
         double over = Mth.clamp((ship.speedMs() - threshold) / Math.max(threshold, 1.0), 0.0, 1.5);

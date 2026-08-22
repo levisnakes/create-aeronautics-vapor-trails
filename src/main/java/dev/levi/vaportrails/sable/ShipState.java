@@ -1,8 +1,11 @@
 package dev.levi.vaportrails.sable;
 
 import dev.levi.vaportrails.fx.EngineFxState;
+import dev.levi.vaportrails.fx.HullShape;
 import dev.levi.vaportrails.fx.PropFxState;
+import dev.levi.vaportrails.VTConfig;
 import dev.levi.vaportrails.fx.ShipCtx;
+import dev.levi.vaportrails.fx.ShipFrame;
 import dev.levi.vaportrails.fx.ShipFxState;
 import dev.ryanhcode.sable.api.block.propeller.BlockEntityPropeller;
 import dev.ryanhcode.sable.companion.math.BoundingBox3dc;
@@ -34,6 +37,8 @@ final class ShipState {
 
     /** Ticks between plot block-entity rescans. */
     private static final int RESCAN_INTERVAL = 40;
+    /** Ticks between full block-silhouette rescans; shapes change rarely. */
+    private static final int HULL_RESCAN_INTERVAL = 200;
     /** Pose jumps beyond this (blocks/tick) are teleports, not motion. */
     private static final double TELEPORT_SPEED_SQ = 100.0;
 
@@ -49,6 +54,10 @@ final class ShipState {
     private final List<BlockEntity> propBes = new ArrayList<>();
     private final List<BlockEntity> engineBes = new ArrayList<>();
     private int rescanIn;
+
+    private HullScan hullScan;
+    private HullShape hullShape;
+    private int hullRescanIn;
 
     ShipState(UUID id) {
         this.id = id;
@@ -96,6 +105,35 @@ final class ShipState {
                     engineFx.computeIfAbsent(be.getBlockPos(), p -> new EngineFxState());
                 }
             }
+        }
+    }
+
+    /**
+     * Advance the block-silhouette scan a little each tick, and kick off a
+     * fresh one periodically so rebuilt or damaged ships stay accurate.
+     */
+    void stepHullScan(ClientSubLevel sub) {
+        if (!VTConfig.HULL_SHAPE.get()) {
+            hullScan = null;
+            hullShape = null;
+            return;
+        }
+        if (hullScan == null) {
+            if (--hullRescanIn > 0) {
+                return;
+            }
+            hullRescanIn = HULL_RESCAN_INTERVAL + (id.hashCode() & 63);
+            hullScan = HullScan.start(sub);
+            if (hullScan == null) {
+                return;
+            }
+        }
+        if (hullScan.step()) {
+            HullShape finished = hullScan.finish();
+            if (finished != null) {
+                hullShape = finished;
+            }
+            hullScan = null;
         }
     }
 
@@ -186,7 +224,15 @@ final class ShipState {
             engines.add(new ShipCtx.EngineCtx(worldPos, CreateCompat.isRunning(be), engineFx.get(plotPos)));
         }
 
+        // Capture the pose as a plain affine frame so the effects can move
+        // between ship space and world space without touching Sable types.
+        Vec3 originWorld = pose.transformPosition(new Vec3(0.0, 0.0, 0.0));
+        ShipFrame frame = new ShipFrame(originWorld,
+                pose.transformPosition(new Vec3(1.0, 0.0, 0.0)).subtract(originWorld),
+                pose.transformPosition(new Vec3(0.0, 1.0, 0.0)).subtract(originWorld),
+                pose.transformPosition(new Vec3(0.0, 0.0, 1.0)).subtract(originWorld));
+
         return new ShipCtx(id, bounds.getCenter(), velocity, velocity.length() * 20.0,
-                bounds, props, engines, fxState);
+                bounds, frame, hullShape, props, engines, fxState);
     }
 }

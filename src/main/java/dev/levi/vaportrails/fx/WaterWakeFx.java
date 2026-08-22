@@ -43,8 +43,19 @@ public final class WaterWakeFx {
             return;
         }
         Vec3 wing = dir.cross(new Vec3(0, 1, 0)).normalize();
-        double halfLen = projectedHalfExtent(box, dir);
-        double halfWidth = projectedHalfExtent(box, wing);
+        double halfLen;
+        double halfWidth;
+        if (ship.hasShape()) {
+            // Real hull extents, so a hull sitting at an angle to the world axes
+            // does not get a wake as wide as its diagonal.
+            Vec3 localDir = ship.frame().dirToLocal(dir);
+            Vec3 localWing = ship.frame().dirToLocal(wing);
+            halfLen = ship.shape().halfExtent(localDir.x, localDir.z);
+            halfWidth = ship.shape().halfExtent(localWing.x, localWing.z);
+        } else {
+            halfLen = projectedHalfExtent(box, dir);
+            halfWidth = projectedHalfExtent(box, wing);
+        }
 
         Vec3 bow = new Vec3(ship.center().x, waterY, ship.center().z).add(dir.scale(halfLen * 0.85));
         Vec3 stern = new Vec3(ship.center().x, waterY, ship.center().z).subtract(dir.scale(halfLen * 0.85));

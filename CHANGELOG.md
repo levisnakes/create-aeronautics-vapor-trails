@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.1.0 — 2026-08-21
+
+### Real hull shapes
+
+Hull-based effects used to work off the world-axis-aligned bounding box, which
+is a poor stand-in for an airframe: the corner of the box on a cross-shaped
+plane is empty air, and the box inflates the moment a ship rotates. The mod now
+scans each ship's blocks and keeps the real silhouette.
+
+- Wingtip trails come off the actual wingtips. The span axis is resolved in
+  SHIP space, so a banking aircraft still trails from its real tips instead of
+  from wherever the world-aligned box happens to bulge.
+- Hover dust samples columns that genuinely contain blocks, and measures
+  clearance from that column's own underside rather than the lowest point of
+  the entire ship.
+- Wake width and shock-cone girth use real hull extents, so a hull sitting at
+  an angle to the world axes no longer gets a wake as wide as its diagonal.
+
+The scan is incremental (a few chunk sections per tick) so large ships never
+cause a hitch, and results are cached and refreshed every ~10 seconds. Ships
+wider than 192 blocks, or ships whose scan has not finished yet, fall back to
+the old bounding-box behaviour. Turn the whole thing off with
+`hullShapeScan = false`.
+
+Verified with `tools/ShapeCheck.java`: on a cross-shaped airframe the old box
+corner sat 18.5 blocks away from the true wingtip.
+
 ## 2.0.0 — 2026-08-21
 
 ### Airflow simulation

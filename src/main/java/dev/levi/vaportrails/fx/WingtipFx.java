@@ -13,6 +13,9 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class WingtipFx {
 
+    /** Reused so the per-tick extremity queries allocate nothing. */
+    private static final double[] TIP_SCRATCH = new double[3];
+
     public static void tick(ClientLevel level, ShipCtx ship, RandomSource rng) {
         if (!VTConfig.WINGTIP_ENABLED.get()) {
             return;
@@ -27,12 +30,36 @@ public final class WingtipFx {
         }
 
         Vec3 dir = ship.velocity().normalize();
-        // Perpendicular "wing" axis; for near-vertical flight fall back to world X.
-        Vec3 wing = Math.abs(dir.y) > 0.95 ? new Vec3(1, 0, 0)
-                : dir.cross(new Vec3(0, 1, 0)).normalize();
+        Vec3 tipA;
+        Vec3 tipB;
 
-        Vec3 tipA = extremeCorner(ship.bounds(), ship.center(), wing, 1.0);
-        Vec3 tipB = extremeCorner(ship.bounds(), ship.center(), wing, -1.0);
+        if (ship.hasShape()) {
+            // Wings belong to the ship, not to the world: find the span axis in
+            // SHIP space so a banking aircraft still trails from its real tips.
+            Vec3 localDir = ship.frame().dirToLocal(dir);
+            double wx = -localDir.z;
+            double wz = localDir.x;
+            double len = Math.sqrt(wx * wx + wz * wz);
+            if (len < 1.0e-4) {
+                // Travelling straight along the ship's own vertical axis.
+                wx = 1.0;
+                wz = 0.0;
+            } else {
+                wx /= len;
+                wz /= len;
+            }
+            double[] tip = TIP_SCRATCH;
+            ship.shape().extreme(wx, wz, tip);
+            tipA = ship.frame().toWorld(tip[0], tip[1], tip[2]);
+            ship.shape().extreme(-wx, -wz, tip);
+            tipB = ship.frame().toWorld(tip[0], tip[1], tip[2]);
+        } else {
+            // No silhouette yet: fall back to the (inflated) bounding box.
+            Vec3 wing = Math.abs(dir.y) > 0.95 ? new Vec3(1, 0, 0)
+                    : dir.cross(new Vec3(0, 1, 0)).normalize();
+            tipA = extremeCorner(ship.bounds(), ship.center(), wing, 1.0);
+            tipB = extremeCorner(ship.bounds(), ship.center(), wing, -1.0);
+        }
 
         double density = Mth.clamp((ship.speedMs() - minSpeed) / Math.max(minSpeed, 1.0), 0.0, 1.0);
         double humid = PropellerFx.humidityBoost(level, ship.center().y);
@@ -42,7 +69,10 @@ public final class WingtipFx {
         emitTip(level, ship, rng, tipB, dir, rate);
     }
 
-    /** The bounding-box corner farthest along {@code axis * sign}, pulled 10% toward centre. */
+    /**
+     * Fallback for ships with no silhouette yet: the bounding-box corner
+     * farthest along {@code axis * sign}, pulled 10% toward centre.
+     */
     private static Vec3 extremeCorner(AABB box, Vec3 center, Vec3 axis, double sign) {
         Vec3 best = null;
         double bestD = -Double.MAX_VALUE;

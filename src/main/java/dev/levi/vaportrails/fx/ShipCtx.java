@@ -12,9 +12,20 @@ import java.util.UUID;
  *
  * @param velocity ship velocity in blocks per tick
  * @param speedMs  |velocity| in metres (blocks) per second
+ * @param bounds   world-axis-aligned bounds; a loose fallback, inflated when
+ *                 the ship is rotated. Prefer {@code shape} when it is present.
+ * @param frame    ship-local to world transform
+ * @param shape    the real block silhouette in ship-local space, or null while
+ *                 the scan is still running or the ship is too large to scan
  */
 public record ShipCtx(UUID id, Vec3 center, Vec3 velocity, double speedMs, AABB bounds,
+                      ShipFrame frame, HullShape shape,
                       List<PropCtx> props, List<EngineCtx> engines, ShipFxState st) {
+
+    /** True when the real hull silhouette is available. */
+    public boolean hasShape() {
+        return shape != null && shape.valid();
+    }
 
     /** Normalized horizontal travel direction, or null when (nearly) stationary/vertical. */
     public Vec3 horizontalDir() {

@@ -17,6 +17,9 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class HoverDustFx {
 
+    /** Reused so column sampling allocates nothing per tick. */
+    private static final double[] COLUMN_SCRATCH = new double[3];
+
     public static void tick(ClientLevel level, ShipCtx ship, RandomSource rng) {
         if (!VTConfig.HOVER_ENABLED.get()) {
             return;
@@ -41,23 +44,42 @@ public final class HoverDustFx {
 
         double maxHeight = VTConfig.HOVER_MAX_HEIGHT.get();
         AABB box = ship.bounds();
-        double area = (box.maxX - box.minX) * (box.maxZ - box.minZ);
+        boolean shaped = ship.hasShape();
+        double area = shaped
+                ? ship.shape().columnCount()
+                : (box.maxX - box.minX) * (box.maxZ - box.minZ);
         int samples = Mth.clamp((int) Math.ceil(area / 48.0), 1, 5);
 
         for (int s = 0; s < samples; s++) {
-            double px = Mth.lerp(0.1 + rng.nextDouble() * 0.8, box.minX, box.maxX);
-            double pz = Mth.lerp(0.1 + rng.nextDouble() * 0.8, box.minZ, box.maxZ);
+            double px;
+            double pz;
+            double underside;
+            if (shaped) {
+                // Sample a column that genuinely contains blocks, and measure
+                // clearance from that column's own underside rather than from
+                // the lowest point of the whole ship.
+                double[] col = COLUMN_SCRATCH;
+                ship.shape().pickColumn(rng, col);
+                Vec3 world = ship.frame().toWorld(col[0], col[1], col[2]);
+                px = world.x;
+                pz = world.z;
+                underside = world.y;
+            } else {
+                px = Mth.lerp(0.1 + rng.nextDouble() * 0.8, box.minX, box.maxX);
+                pz = Mth.lerp(0.1 + rng.nextDouble() * 0.8, box.minZ, box.maxZ);
+                underside = box.minY;
+            }
 
             // Leave the area under running propellers to the prop-wash effect.
             if (nearActiveProp(ship, px, pz)) {
                 continue;
             }
 
-            FxUtil.Probe probe = FxUtil.probeDown(level, px, box.minY + 0.5, pz, maxHeight + 1.0);
+            FxUtil.Probe probe = FxUtil.probeDown(level, px, underside + 0.5, pz, maxHeight + 1.0);
             if (probe.type() == FxUtil.SurfaceType.NONE) {
                 continue;
             }
-            double clearance = box.minY - probe.surfaceY();
+            double clearance = underside - probe.surfaceY();
             if (clearance > maxHeight) {
                 continue;
             }
