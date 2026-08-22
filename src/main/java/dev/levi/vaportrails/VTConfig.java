@@ -19,6 +19,12 @@ public final class VTConfig {
     public static final ModConfigSpec.BooleanValue AIRFLOW_ENABLED;
     public static final ModConfigSpec.BooleanValue HULL_SHAPE;
 
+    // ---- wake turbulence ----
+    public static final ModConfigSpec.BooleanValue WAKE_TURB_ENABLED;
+    public static final ModConfigSpec.DoubleValue WAKE_TURB_LIFETIME;
+    public static final ModConfigSpec.DoubleValue WAKE_TURB_STRENGTH;
+    public static final ModConfigSpec.BooleanValue WAKE_TURB_REVEAL;
+
     // ---- shock cone ----
     public static final ModConfigSpec.BooleanValue SHOCK_ENABLED;
     public static final ModConfigSpec.DoubleValue SHOCK_MIN_SPEED;
@@ -153,6 +159,23 @@ public final class VTConfig {
         WAKE_MIN_SPEED = b.comment("Minimum ship speed for a wake (m/s).")
                 .defineInRange("minSpeed", 2.0, 0.5, 40.0);
         WAKE_INTENSITY = b.defineInRange("intensity", 1.0, 0.0, 2.0);
+        b.pop();
+
+        b.push("wakeTurbulence");
+        WAKE_TURB_ENABLED = b.comment(
+                        "Fast ships shed counter-rotating vortices from their wingtips that",
+                        "linger in the air long after the visible trail has faded. Flying",
+                        "through one - yours or someone else's - tears your vapor apart.")
+                .define("enabled", true);
+        WAKE_TURB_LIFETIME = b.comment("How long shed turbulence lingers, in seconds.")
+                .defineInRange("lifetimeSeconds", 20.0, 3.0, 60.0);
+        WAKE_TURB_STRENGTH = b.comment("Multiplier on how violently wakes throw things around.")
+                .defineInRange("strength", 1.0, 0.0, 2.0);
+        WAKE_TURB_REVEAL = b.comment(
+                        "Draw disturbed air as ragged vapor when a ship flies into an",
+                        "existing wake. Turning this off leaves wakes invisible but still",
+                        "physically active.")
+                .define("reveal", true);
         b.pop();
 
         b.push("shockCone");

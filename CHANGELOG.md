@@ -1,5 +1,41 @@
 # Changelog
 
+## 2.3.0 — 2026-08-22
+
+### Wake turbulence
+
+The sky now remembers where ships have flown.
+
+A fast wing sheds a pair of counter-rotating vortices from its tips. Those
+tubes outlive the visible condensation by a long way: they linger for about
+twenty seconds, sink slowly the way real wake vortices do, and stay strong
+enough to throw anything that flies through them around.
+
+Cross another ship's flight path and your own vapor is torn apart as you hit
+their wake. Turn tightly enough to cross your own and you fly through your own
+turbulence. Because a ship is always sitting in the wake it just shed, cores
+ignore their own shedder for the first two seconds, so nothing shakes itself
+apart on takeoff.
+
+Flying into disturbed air draws it back out as ragged vapor, which is what
+makes the effect discoverable rather than a subtle nudge you would never
+notice. That reveal can be turned off on its own, leaving wakes invisible but
+still physically active.
+
+Cores use a Rankine vortex profile (solid-body rotation inside the core, 1/r
+falloff outside) and live in a uniform spatial hash, so sampling stays cheap no
+matter how much traffic has passed through. Shedding is driven independently of
+the visible wingtip trails, so turning the trails off does not silently disable
+the physics.
+
+New config section `wakeTurbulence`: `enabled`, `lifetimeSeconds` (20),
+`strength` (1.0) and `reveal`.
+
+Verified with `tools/WakeCheck.java`: 18 checks covering the vortex profile,
+the counter-rotating pair signature, lifetime decay, own-wake suppression, and
+exact agreement between the spatially hashed sampling and a brute-force scan
+over 5000 randomised queries.
+
 ## 2.2.0 — 2026-08-21
 
 ### Effects follow the ship you can actually see

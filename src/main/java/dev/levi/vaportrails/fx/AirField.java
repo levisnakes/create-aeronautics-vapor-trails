@@ -164,6 +164,16 @@ public final class AirField {
             }
         }
 
+        // Persistent wake turbulence shed by earlier flights. Gated on the
+        // same switch as the jets, because this flag is what makes particles
+        // drift at all; wake shedding has its own separate toggle.
+        if (enabled && !WakeField.idle()) {
+            WakeField.sample(x, y, z, 0);
+            ax += WakeField.outX();
+            ay += WakeField.outY();
+            az += WakeField.outZ();
+        }
+
         outX = ax;
         outY = ay;
         outZ = az;
@@ -181,9 +191,13 @@ public final class AirField {
         return outZ;
     }
 
-    /** True when there is nothing but ambient breeze to sample. */
+    /** True when there is nothing at all to sample. */
     public static boolean idle() {
-        return count == 0 && Math.abs(breezeX) < 1.0e-5 && Math.abs(breezeZ) < 1.0e-5;
+        if (!enabled) {
+            return true;
+        }
+        return count == 0 && WakeField.idle()
+                && Math.abs(breezeX) < 1.0e-5 && Math.abs(breezeZ) < 1.0e-5;
     }
 
     public static int jetCount() {

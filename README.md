@@ -18,8 +18,8 @@ without this mod on the other end — and your ships get the effects locally.
 
 | Effect | What it does | Key config |
 | --- | --- | --- |
-| Wingtip trails | Condensation streaks off the outer edges of fast ships, 3–6 s fade, denser in rain / near clouds | `minSpeed` (20 m/s) |
-| Blade-tip vapor | Flickering vapor ring at propeller blade-tip radius, phased to the blade pass | `bladeTipMinRpm` (96) |
+| Wingtip trails | Condensation streaks off the real wingtips of fast ships, 3–6 s fade, denser in rain / near clouds | `minSpeed` (20 m/s) |
+| Blade-tip vapor | Flickering vapor ring at the blade-tip radius, locked to the propeller's real rendered angle | `bladeTipMinRpm` (64) |
 | Prop wash | Faint air-swirl cone streaming behind the disc, scales with RPM + ship speed | `propWashMinRpm` (32) |
 | Ground/water disturbance | Dust ring or water spray directly under a running prop within 5 blocks of the surface | `groundDisturbanceRange` |
 | Startup/shutdown puff | Punchy smoke/vapor burst when a prop spins up or winds down | `startupPuff` |
@@ -27,15 +27,42 @@ without this mod on the other end — and your ships get the effects locally.
 | Hover dust | Block-appropriate debris under low/hovering ships (sand, grass, water spray), away from props | `maxHeight` (4) |
 | Water wake | V-shaped foam trail + bobbing stern foam + bow splash, scaled by speed and hull width | `minSpeed` (2 m/s) |
 | Cloud punch | Mist burst ring when crossing the cloud layer at speed (cloud height read from the client dimension) | `minVerticalSpeed` (5 m/s) |
+| Shock cone | Condensation disc around the hull at very high speed, tightening as it climbs | `minSpeed` (40 m/s) |
+| Wake turbulence | Counter-rotating vortices shed from the wingtips that linger ~20 s and tear apart anything flying through them | `lifetimeSeconds` (20) |
 
 Every effect has an enable flag and a 0.0–2.0 intensity multiplier. Config is client TOML
 (`config/vaportrails-client.toml`) and there's an in-game screen via Mods → Vapor Trails →
 Config (NeoForge's built-in `ConfigurationScreen`, no extra dependency).
 
-Particle budgeting: global live cap (default 800), per-ship per-tick cap, and a reserved
+Particle budgeting: global live cap (default 2000), per-ship per-tick cap, and a reserved
 propeller sub-budget so a ten-prop gunship can't starve its own wingtip/wake effects. Emission
 scales down automatically on the vanilla "Decreased" (×0.55) and "Minimal" (×0.2) particle
-settings, and ships beyond `effectRange` (default 192 blocks) spawn nothing.
+settings, and ships beyond `effectRange` (default 192 blocks) spawn nothing. An adaptive
+governor thins effects further when the frame rate drops below `targetFps` (default 45).
+
+### Simulation layers
+
+Two shared fields sit underneath the individual effects:
+
+- **Airflow field** (`airflowSimulation`) — propellers publish their slipstream as cone jets
+  and every particle drifts through the result each tick, so wash pushes vapor, dust and foam
+  around instead of each effect moving in isolation. Also carries a slow ambient breeze.
+- **Wake field** (`wakeTurbulence`) — fast ships shed counter-rotating vortex cores from their
+  wingtips into a persistent, spatially hashed store. They sink, decay over ~20 s, and induce a
+  Rankine swirl on anything nearby. A ship flying into disturbed air draws it back out as ragged
+  vapor, so the wake is visible when you hit it rather than being an invisible nudge.
+
+### Ship geometry
+
+Hull effects use each ship's real block silhouette, not its bounding box. A scan walks the
+plot's blocks a few chunk sections per tick (never in one hitch), building a local occupancy
+grid plus a 2D convex hull of the occupied columns. Wingtip queries resolve the span axis in
+*ship* space, so a banking aircraft still trails from its actual tips. Ships wider than 192
+blocks, or ones whose scan hasn't finished, fall back to the bounding box.
+
+Rotation is part of the physics: angular velocity is recovered from the pose each tick and
+effects anchored away from the centre use `v + ω×r`, so a rolling ship's wingtips are rated on
+their own airspeed rather than the hull's.
 
 ## Building
 
@@ -118,7 +145,8 @@ Drop the jar in a Create Aeronautics 1.21.1 NeoForge instance and check, roughly
    ~96 RPM → tip ring. Check a *bearing* propeller (sail blades) too — the marker/effects
    should sit on the disc one block out from the bearing.
 4. **Wash direction**: the swirl stream must blow *away* from the thrust direction (ship gets
-   pushed opposite the stream). If reversed, flip `thrustSign` in `PropellerFx`.
+   pushed opposite the stream), and must reverse when you reverse the propeller. If it is
+   backwards on your build, set `propeller.invertPropWash = true`.
 5. **Startup burst**: toggle the prop's rotation on/off → one dense puff per transition, no
    repeats while running steadily.
 6. **Ground/water disturbance**: hover with a running prop < 5 blocks over sand, then water —
@@ -126,6 +154,14 @@ Drop the jar in a Create Aeronautics 1.21.1 NeoForge instance and check, roughly
 7. **Wingtips**: dive past 20 m/s → streaks from the outer extremities; denser in rain.
 8. **Wake**: drive a hull through water > 2 m/s → V foam arms + stern churn.
 9. **Cloud punch**: climb through y≈192 at > 5 m/s vertical → one mist ring, no double-fire.
+9b. **Wake turbulence**: fly past 20 m/s in a straight line, turn hard, and cross your own
+    path within ~20 s → ragged vapor should tear off the hull as you hit the disturbed air.
+    A second ship crossing your trail is the clearer test. `debugMarkers` is unaffected; set
+    `wakeTurbulence.reveal = false` to confirm the wake is still physically active (your
+    trails still get shoved around) with nothing drawn.
+9c. **Banking trails**: roll hard at moderate speed → the rising wingtip should stream while
+    the falling one fades. Both tips streaming equally means angular velocity isn't reaching
+    the effect.
 10. **Graceful absence**: same jar in a plain NeoForge instance (no Sable) → log line
     `Sable not installed - vapor trail effects idle.`, no crash, config screen still opens.
 11. **Compat**: with Sodium/Embeddium + Iris/Oculus shaders and "Separate Sable Render

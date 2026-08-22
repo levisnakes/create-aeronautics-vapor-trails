@@ -15,6 +15,7 @@ public final class WingtipFx {
 
     /** Reused so the per-tick extremity queries allocate nothing. */
     private static final double[] TIP_SCRATCH = new double[3];
+    private static final Vec3[] TIPS = new Vec3[2];
 
     public static void tick(ClientLevel level, ShipCtx ship, RandomSource rng) {
         if (!VTConfig.WINGTIP_ENABLED.get()) {
@@ -30,6 +31,25 @@ public final class WingtipFx {
         }
 
         Vec3 dir = ship.velocity().normalize();
+        Vec3[] tips = resolveTips(ship, dir);
+        Vec3 tipA = tips[0];
+        Vec3 tipB = tips[1];
+
+        double humid = PropellerFx.humidityBoost(level, ship.center().y);
+        // Each tip is rated on ITS own airspeed. On a rolling ship one tip
+        // sweeps far faster than the hull, so it streams while the other fades.
+        emitTip(level, ship, rng, tipA, dir, minSpeed, humid, scale);
+        emitTip(level, ship, rng, tipB, dir, minSpeed, humid, scale);
+    }
+
+    /**
+     * Where the ship's two span extremities are in world space.
+     *
+     * Shared with wake shedding, which needs the same points even when the
+     * visible trails are switched off. The returned array is reused, so copy
+     * out of it before calling again.
+     */
+    public static Vec3[] resolveTips(ShipCtx ship, Vec3 dir) {
         Vec3 tipA;
         Vec3 tipB;
 
@@ -60,12 +80,9 @@ public final class WingtipFx {
             tipA = extremeCorner(ship.bounds(), ship.center(), wing, 1.0);
             tipB = extremeCorner(ship.bounds(), ship.center(), wing, -1.0);
         }
-
-        double humid = PropellerFx.humidityBoost(level, ship.center().y);
-        // Each tip is rated on ITS own airspeed. On a rolling ship one tip
-        // sweeps far faster than the hull, so it streams while the other fades.
-        emitTip(level, ship, rng, tipA, dir, minSpeed, humid, scale);
-        emitTip(level, ship, rng, tipB, dir, minSpeed, humid, scale);
+        TIPS[0] = tipA;
+        TIPS[1] = tipB;
+        return TIPS;
     }
 
     /**

@@ -34,3 +34,14 @@ Tips:
 - Turn `debugMarkers` OFF for captures (it's for testing).
 - Bump `masterIntensity` to ~1.3 for stills so effects read at a distance; keep 1.0 for GIFs.
 - For GIFs: 3–6 s loops, 60 fps capture → 30 fps export, under 10 MB for Modrinth.
+
+7. **[GIF — the one people will share] Wake crossing.** Two ships, or one ship doubling back on
+   its own path. Fly a straight fast run to lay down a wake, bank hard, and cross the line
+   within ~15 s. Capture the moment of entry: the trails should visibly shred and swirl as the
+   hull hits the disturbed air. Shoot side-on so both the old flight path and the crossing are
+   in frame. This is the only effect in the mod no other Aeronautics addon has, so it is worth
+   a dedicated slot even though it takes the most setup.
+
+8. **[Image] Banking wingtip asymmetry.** Hard roll at moderate speed, camera slightly ahead and
+   below. The rising tip should be streaming heavily while the falling tip is nearly clean —
+   that asymmetry is what sells the physics to anyone who flies.

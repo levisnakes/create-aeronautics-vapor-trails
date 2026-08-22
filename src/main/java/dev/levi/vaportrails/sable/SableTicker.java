@@ -9,6 +9,8 @@ import dev.levi.vaportrails.fx.HoverDustFx;
 import dev.levi.vaportrails.fx.PropellerFx;
 import dev.levi.vaportrails.fx.ShipCtx;
 import dev.levi.vaportrails.fx.ShockConeFx;
+import dev.levi.vaportrails.fx.WakeField;
+import dev.levi.vaportrails.fx.WakeTurbulenceFx;
 import dev.levi.vaportrails.fx.WaterWakeFx;
 import dev.levi.vaportrails.fx.WingtipFx;
 import dev.ryanhcode.sable.api.sublevel.ClientSubLevelContainer;
@@ -47,6 +49,7 @@ final class SableTicker {
             // removal hooks, so the live count has to be zeroed here too.
             Budget.reset();
             AirField.reset();
+            WakeField.reset();
             lastLevel = level;
         }
         tickCount++;
@@ -106,6 +109,7 @@ final class SableTicker {
                 debugMarkers(level, ctx);
             }
             publishSlipstream(ctx);
+            shedWake(ctx);
             // Propellers first: they draw from their own sub-budget and must
             // not be starved by the ambient effects.
             PropellerFx.tick(level, ctx, rng);
@@ -115,6 +119,7 @@ final class SableTicker {
             HoverDustFx.tick(level, ctx, rng);
             WaterWakeFx.tick(level, ctx, rng);
             CloudPunchFx.tick(level, ctx, rng);
+            WakeTurbulenceFx.tick(level, ctx, rng);
         }
         STATES.keySet().retainAll(SEEN);
     }
@@ -136,6 +141,24 @@ final class SableTicker {
         // Trails behind the hull, moving the same way the ship does.
         AirField.addJet(ctx.center().subtract(dir.scale(girth)), dir,
                 ctx.velocity().length() * 0.30, girth, length, 0.0);
+    }
+
+    /**
+     * Shed wake vortices from a fast ship's wingtips.
+     *
+     * Driven here rather than from WingtipFx so that turning off the visible
+     * trails does not silently switch off the wake physics too. The speed gate
+     * is shared with the trails because it marks the same thing: the point at
+     * which the wing is working hard enough to roll air off its tips.
+     */
+    private static void shedWake(ShipCtx ctx) {
+        if (!VTConfig.WAKE_TURB_ENABLED.get()
+                || ctx.speedMs() < VTConfig.WINGTIP_MIN_SPEED.get()) {
+            return;
+        }
+        Vec3 dir = ctx.velocity().normalize();
+        Vec3[] tips = WingtipFx.resolveTips(ctx, dir);
+        WakeTurbulenceFx.shed(ctx, tips[0], tips[1], dir);
     }
 
     /** Tracking/detection proof: end-rod motes at ship centre, prop hubs and blade tips. */

@@ -21,6 +21,12 @@ Propellers don't just spit particles and forget them. Every running prop feeds i
 
 You can switch it off if you prefer the cheaper static behaviour.
 
+## Wake turbulence
+
+Fast ships shed a pair of counter-rotating vortices off their wingtips. They hang in the air for about twenty seconds after the visible trail has gone, sink slowly, and stay strong enough to throw things around.
+
+Cross another ship's path and your own vapor gets torn apart as you hit their wake. Turn hard enough to cross your own and you'll fly through your own turbulence. The sky remembers where ships have been.
+
 ## Everything else
 
 - Wingtip trails: white streaks off the ship's outer edges above 20 m/s, fading over a few seconds
@@ -29,6 +35,8 @@ You can switch it off if you prefer the cheaper static behaviour.
 - Water wake: V-shaped foam trail, churned foam behind the stern, bow splash at speed
 - Cloud punch: a ring of mist when you break through the cloud layer at speed
 - Shock cone: past 40 m/s a condensation disc forms around the hull and tightens as you accelerate
+
+Wingtip trails come off the real wingtips, not the corners of a bounding box, and a banking ship streams from the rising tip while the other fades.
 
 ## Config and performance
 

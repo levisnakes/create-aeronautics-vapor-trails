@@ -2,6 +2,7 @@ package dev.levi.vaportrails;
 
 import dev.levi.vaportrails.fx.AirField;
 import dev.levi.vaportrails.fx.Budget;
+import dev.levi.vaportrails.fx.WakeField;
 import dev.levi.vaportrails.sable.SableCompat;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
@@ -26,6 +27,7 @@ public final class ClientEvents {
         }
         // Jets are rebuilt from scratch every tick; clear before anything adds.
         AirField.beginTick(mc.level);
+        WakeField.tick();
         Budget.tickStart(mc);
         SableCompat.tick(mc);
     }
@@ -34,6 +36,7 @@ public final class ClientEvents {
         SableCompat.reset();
         Budget.reset();
         AirField.reset();
+        WakeField.reset();
     }
 
     private ClientEvents() {}
