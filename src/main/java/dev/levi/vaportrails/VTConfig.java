@@ -14,6 +14,14 @@ public final class VTConfig {
     public static final ModConfigSpec.DoubleValue PROPELLER_BUDGET_SHARE;
     public static final ModConfigSpec.IntValue EFFECT_RANGE;
     public static final ModConfigSpec.BooleanValue DEBUG_MARKERS;
+    public static final ModConfigSpec.BooleanValue ADAPTIVE_QUALITY;
+    public static final ModConfigSpec.IntValue TARGET_FPS;
+    public static final ModConfigSpec.BooleanValue AIRFLOW_ENABLED;
+
+    // ---- shock cone ----
+    public static final ModConfigSpec.BooleanValue SHOCK_ENABLED;
+    public static final ModConfigSpec.DoubleValue SHOCK_MIN_SPEED;
+    public static final ModConfigSpec.DoubleValue SHOCK_INTENSITY;
 
     // ---- wingtip trails ----
     public static final ModConfigSpec.BooleanValue WINGTIP_ENABLED;
@@ -71,6 +79,17 @@ public final class VTConfig {
                         "Spawn end-rod marker particles at tracked ship centres and propeller",
                         "hubs/tips. Useful to verify Sable tracking and propeller detection.")
                 .define("debugMarkers", false);
+        ADAPTIVE_QUALITY = b.comment(
+                        "Automatically thin out effects when the frame rate drops below",
+                        "targetFps, and restore them once there is headroom again.")
+                .define("adaptiveQuality", true);
+        TARGET_FPS = b.comment("Frame rate the adaptive governor tries to protect.")
+                .defineInRange("targetFps", 45, 15, 240);
+        AIRFLOW_ENABLED = b.comment(
+                        "Simulate a shared airflow field so propeller slipstreams push",
+                        "nearby vapor, dust and foam around instead of every effect",
+                        "drifting independently. Turn off for the old static behaviour.")
+                .define("airflowSimulation", true);
         b.pop();
 
         b.push("wingtipTrails");
@@ -127,6 +146,14 @@ public final class VTConfig {
         WAKE_MIN_SPEED = b.comment("Minimum ship speed for a wake (m/s).")
                 .defineInRange("minSpeed", 2.0, 0.5, 40.0);
         WAKE_INTENSITY = b.defineInRange("intensity", 1.0, 0.0, 2.0);
+        b.pop();
+
+        b.push("shockCone");
+        SHOCK_ENABLED = b.comment("Condensation cone that forms around the hull at very high speed.")
+                .define("enabled", true);
+        SHOCK_MIN_SPEED = b.comment("Speed at which the shock cone starts to form (m/s).")
+                .defineInRange("minSpeed", 40.0, 10.0, 200.0);
+        SHOCK_INTENSITY = b.defineInRange("intensity", 1.0, 0.0, 2.0);
         b.pop();
 
         b.push("cloudPunch");

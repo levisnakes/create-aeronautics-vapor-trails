@@ -21,6 +21,15 @@ public final class CloudPunchFx {
         if (st.cloudCooldown > 0) {
             st.cloudCooldown--;
         }
+
+        // Track altitude unconditionally. If this only ran while the effect was
+        // enabled, toggling it on mid-flight would compare against a stale
+        // altitude and fire a burst out of nowhere.
+        double y = ship.center().y;
+        double prevY = st.prevYInit ? st.prevY : y;
+        st.prevY = y;
+        st.prevYInit = true;
+
         if (!VTConfig.CLOUD_ENABLED.get()) {
             return;
         }
@@ -29,11 +38,6 @@ public final class CloudPunchFx {
             return; // dimension without clouds
         }
         double scale = Budget.emissionScale() * VTConfig.CLOUD_INTENSITY.get();
-
-        double y = ship.center().y;
-        double prevY = st.prevYInit ? st.prevY : y;
-        st.prevY = y;
-        st.prevYInit = true;
         if (scale <= 0.0 || st.cloudCooldown > 0) {
             return;
         }

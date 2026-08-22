@@ -27,13 +27,19 @@ public record ShipCtx(UUID id, Vec3 center, Vec3 velocity, double speedMs, AABB 
      * @param pos    hub/disc centre in world space
      * @param axis   world-space rotation axis (unit, pointing along block facing)
      * @param radius blade-tip radius in blocks
-     * @param rpm     signed Create rotation speed
-     * @param thrust  signed thrust along the axis (0 when unknown)
-     * @param washDir world-space air stream direction if the mod could read it
-     *                directly (bearing props expose it); null means "infer it"
+     * @param rpm       signed Create rotation speed
+     * @param thrust    signed thrust magnitude (0 when unknown)
+     * @param thrustDir world-space unit vector the propeller pushes the ship
+     *                  toward; air is driven the opposite way
      */
     public record PropCtx(Vec3 pos, Vec3 axis, double radius, double rpm, double thrust,
-                          boolean active, Vec3 washDir, PropFxState st) {}
+                          boolean active, Vec3 thrustDir, PropFxState st) {
+
+        /** Direction the propeller drives air, i.e. where the wash goes. */
+        public Vec3 washDir() {
+            return thrustDir.scale(-1.0);
+        }
+    }
 
     public record EngineCtx(Vec3 pos, boolean running, EngineFxState st) {}
 }

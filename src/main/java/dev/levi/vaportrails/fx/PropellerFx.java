@@ -59,14 +59,24 @@ public final class PropellerFx {
         Vec3 u = FxUtil.perpendicular(prop.axis());
         Vec3 w = prop.axis().cross(u).normalize();
 
+        Vec3 washDir = prop.washDir();
+        if (VTConfig.PROP_WASH_INVERT.get()) {
+            washDir = washDir.scale(-1.0);
+        }
+
         if (VTConfig.PROP_TIP_ENABLED.get() && rpm >= VTConfig.PROP_TIP_MIN_RPM.get()) {
             bladeTips(level, ship, prop, rng, scale, u, w);
         }
-        if (VTConfig.PROP_WASH_ENABLED.get() && rpm >= VTConfig.PROP_WASH_MIN_RPM.get()) {
-            wash(level, ship, prop, rng, scale, u, w);
-        }
-        if (VTConfig.PROP_GROUND_ENABLED.get() && rpm >= VTConfig.PROP_WASH_MIN_RPM.get()) {
-            groundDisturbance(level, prop, rng, scale, u, w);
+        if (rpm >= VTConfig.PROP_WASH_MIN_RPM.get()) {
+            // Publish the slipstream even when the wash particles themselves are
+            // switched off, so other effects still get blown around by it.
+            publishJet(ship, prop, washDir, rpm);
+            if (VTConfig.PROP_WASH_ENABLED.get()) {
+                wash(level, ship, prop, rng, scale, u, w, washDir);
+            }
+            if (VTConfig.PROP_GROUND_ENABLED.get()) {
+                groundDisturbance(level, prop, rng, scale, washDir);
+            }
         }
     }
 
@@ -111,16 +121,19 @@ public final class PropellerFx {
 
     // ---- 2b prop wash ----
 
+    /** Feed this propeller's slipstream into the shared airflow field. */
+    private static void publishJet(ShipCtx ship, ShipCtx.PropCtx prop, Vec3 washDir, double rpm) {
+        double frac = rpm / MAX_RPM;
+        double speed = 0.12 + 0.40 * frac;
+        double length = (4.0 + 10.0 * frac) * (1.0 + Mth.clamp(ship.speedMs() / 30.0, 0.0, 1.0));
+        double swirl = Math.signum(prop.rpm()) * 0.045 * frac;
+        AirField.addJet(prop.pos(), washDir, speed, Math.max(0.6, prop.radius() * 0.9),
+                length, swirl);
+    }
+
     private static void wash(ClientLevel level, ShipCtx ship, ShipCtx.PropCtx prop,
-                             RandomSource rng, double scale, Vec3 u, Vec3 w) {
+                             RandomSource rng, double scale, Vec3 u, Vec3 w, Vec3 washDir) {
         double rpm = Math.abs(prop.rpm());
-        // Prefer the direction read straight from the propeller (bearing props);
-        // fall back to inferring from thrust/airflow signs for block props.
-        Vec3 washDir = prop.washDir() != null ? prop.washDir()
-                : prop.axis().scale(-thrustSign(prop));
-        if (VTConfig.PROP_WASH_INVERT.get()) {
-            washDir = washDir.scale(-1.0);
-        }
         double washSpeed = 0.12 + 0.40 * (rpm / MAX_RPM);
         // The wash cone also stretches with how fast the ship itself moves.
         double shipBoost = Mth.clamp(ship.speedMs() / 30.0, 0.0, 1.0);
@@ -144,35 +157,43 @@ public final class PropellerFx {
     // ---- 2c ground/water disturbance ----
 
     private static void groundDisturbance(ClientLevel level, ShipCtx.PropCtx prop,
-                                          RandomSource rng, double scale, Vec3 u, Vec3 w) {
-        double range = VTConfig.PROP_GROUND_RANGE.get();
-        FxUtil.Probe probe = FxUtil.probeDown(level, prop.pos().x, prop.pos().y - 0.2, prop.pos().z, range);
-        if (probe.type() == FxUtil.SurfaceType.NONE) {
+                                          RandomSource rng, double scale, Vec3 washDir) {
+        // Only a prop actually blowing downward disturbs the surface. A
+        // horizontal cruise prop should not be kicking up dust beneath itself.
+        if (washDir.y > -0.25) {
             return;
         }
-        double depth = prop.pos().y - probe.surfaceY();
-        double strength = Mth.clamp(1.0 - depth / range, 0.05, 1.0)
-                * (Math.abs(prop.rpm()) / MAX_RPM);
-        double ringR = Math.max(1.0, prop.radius());
+        double range = VTConfig.PROP_GROUND_RANGE.get();
+        FxUtil.Impact impact = FxUtil.probeRay(level, prop.pos(), washDir, range);
+        if (impact.type() == FxUtil.SurfaceType.NONE) {
+            return;
+        }
+        double distance = impact.pos().distanceTo(prop.pos());
+        // Straight-down wash concentrates; a glancing angle spreads and weakens.
+        double incidence = Mth.clamp(-washDir.y, 0.0, 1.0);
+        double strength = Mth.clamp(1.0 - distance / range, 0.05, 1.0)
+                * incidence * (Math.abs(prop.rpm()) / MAX_RPM);
+        double ringR = Math.max(1.0, prop.radius()) * (1.0 + 0.6 * (1.0 - incidence));
         int n = FxUtil.count(rng, (4.0 + 8.0 * strength) * scale);
         for (int i = 0; i < n; i++) {
             double angle = rng.nextDouble() * Mth.TWO_PI;
             double r = ringR * (0.7 + rng.nextDouble() * 0.6);
-            // The ring sits directly under the disc, flattened onto the surface.
-            double px = prop.pos().x + Math.cos(angle) * r;
-            double pz = prop.pos().z + Math.sin(angle) * r;
+            // Ring centred where the slipstream lands, flattened onto the surface.
+            double px = impact.pos().x + Math.cos(angle) * r;
+            double pz = impact.pos().z + Math.sin(angle) * r;
             double outX = Math.cos(angle) * (0.10 + 0.15 * strength);
             double outZ = Math.sin(angle) * (0.10 + 0.15 * strength);
-            if (probe.type() == FxUtil.SurfaceType.WATER) {
+            double surfaceY = impact.pos().y;
+            if (impact.type() == FxUtil.SurfaceType.WATER) {
                 FxUtil.vanilla(level, true, ParticleTypes.SPLASH,
-                        px, probe.surfaceY() + 0.1, pz, outX * 2.0, 0.12 + 0.25 * strength, outZ * 2.0);
-                FxUtil.foam(level, true, px, probe.surfaceY() + 0.02, pz, outX * 0.6, outZ * 0.6,
+                        px, surfaceY + 0.1, pz, outX * 2.0, 0.12 + 0.25 * strength, outZ * 2.0);
+                FxUtil.foam(level, true, px, surfaceY + 0.02, pz, outX * 0.6, outZ * 0.6,
                         0.25f + rng.nextFloat() * 0.15f, 25 + rng.nextInt(20), 0.8f);
             } else {
-                FxUtil.vanilla(level, true, new BlockParticleOption(ParticleTypes.BLOCK, probe.state()),
-                        px, probe.surfaceY() + 0.15, pz, outX * 4.0, 0.8 * strength, outZ * 4.0);
+                FxUtil.vanilla(level, true, new BlockParticleOption(ParticleTypes.BLOCK, impact.state()),
+                        px, surfaceY + 0.15, pz, outX * 4.0, 0.8 * strength, outZ * 4.0);
                 if (rng.nextFloat() < 0.5f) {
-                    FxUtil.wash(level, true, px, probe.surfaceY() + 0.3, pz, outX, 0.04, outZ,
+                    FxUtil.wash(level, true, px, surfaceY + 0.3, pz, outX, 0.04, outZ,
                             0.6f, 16 + rng.nextInt(10), 0.4f);
                 }
             }
@@ -206,16 +227,6 @@ public final class PropellerFx {
     }
 
     // ---- helpers ----
-
-    private static double thrustSign(ShipCtx.PropCtx prop) {
-        if (Math.abs(prop.thrust()) > 1.0e-3) {
-            return Math.signum(prop.thrust());
-        }
-        // Don't guess from the RPM sign - that flips with gearing, not with the
-        // actual airflow. A constant is at least consistent per propeller, and
-        // the invertPropWash config can flip it globally.
-        return 1.0;
-    }
 
     /** Vapor forms far more readily in rain or near the cloud layer. */
     static double humidityBoost(ClientLevel level, double y) {

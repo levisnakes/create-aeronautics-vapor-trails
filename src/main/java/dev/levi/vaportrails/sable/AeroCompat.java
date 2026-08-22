@@ -59,21 +59,6 @@ final class AeroCompat {
                 && Math.abs(bearing.getAngularSpeed()) > 1.0e-3f;
     }
 
-    /**
-     * The bearing's own thrust direction (plot-local), or null. Air streams
-     * the opposite way, so this beats guessing from RPM signs.
-     */
-    static net.minecraft.world.phys.Vec3 bearingThrustDir(BlockEntity be) {
-        if (!(be instanceof PropellerBearingBlockEntity bearing)) {
-            return null;
-        }
-        org.joml.Vector3d t = bearing.thrustDirection;
-        if (t == null || t.lengthSquared() < 1.0e-6) {
-            return null;
-        }
-        return new net.minecraft.world.phys.Vec3(t.x, t.y, t.z).normalize();
-    }
-
     /** Distance from the hub block centre to the blade disc, along the facing. */
     static double discOffset(BlockEntity be) {
         if (be instanceof PropellerBearingBlockEntity) {

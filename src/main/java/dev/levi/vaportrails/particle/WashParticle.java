@@ -1,5 +1,6 @@
 package dev.levi.vaportrails.particle;
 
+import dev.levi.vaportrails.fx.AirField;
 import dev.levi.vaportrails.fx.Budget;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
@@ -47,6 +48,13 @@ public class WashParticle extends TextureSheetParticle {
     @Override
     public void tick() {
         super.tick();
+        // Wash particles *are* the moving air, so they track the field closely.
+        if (!this.removed && !AirField.idle()) {
+            AirField.sample(this.x, this.y, this.z);
+            this.xd = AirField.drift(this.xd, AirField.outX(), 0.45);
+            this.yd = AirField.drift(this.yd, AirField.outY(), 0.45);
+            this.zd = AirField.drift(this.zd, AirField.outZ(), 0.45);
+        }
         this.oRoll = this.roll;
         this.roll += 0.25f;
         float t = (float) this.age / (float) this.lifetime;

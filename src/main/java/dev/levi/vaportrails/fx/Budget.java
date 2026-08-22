@@ -36,6 +36,7 @@ public final class Budget {
 
     /** Refresh config/graphics-derived values; call once per client tick. */
     public static void tickStart(Minecraft mc) {
+        Quality.tick(mc);
         maxLive = VTConfig.MAX_PARTICLES.get();
         master = VTConfig.MASTER_INTENSITY.get();
         ParticleStatus status = mc.options.particles().get();
@@ -76,9 +77,12 @@ public final class Budget {
         return true;
     }
 
-    /** Master intensity x particle-setting degradation, applied to emission rates. */
+    /**
+     * Master intensity x particle-setting degradation x adaptive throttle,
+     * applied to emission rates.
+     */
     public static double emissionScale() {
-        return master * statusMult;
+        return master * statusMult * Quality.factor();
     }
 
     /** True when the vanilla particle setting is MINIMAL - ambient-only effects should skip. */
@@ -86,8 +90,16 @@ public final class Budget {
         return statusMult <= 0.2;
     }
 
+    /**
+     * Drop the live count back to zero. Must be called whenever the particle
+     * engine is wiped out from under us (dimension change, disconnect), because
+     * {@code ParticleEngine.clearParticles} discards particles without running
+     * their removal hook - the counter would otherwise creep up until it
+     * permanently sat at the cap and refused every spawn.
+     */
     public static void reset() {
         live = 0;
+        Quality.reset();
     }
 
     private Budget() {}

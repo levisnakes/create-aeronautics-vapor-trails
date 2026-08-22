@@ -26,8 +26,13 @@ public final class HoverDustFx {
             return;
         }
 
-        boolean propRunning = ship.props().stream()
-                .anyMatch(p -> p.active() && Math.abs(p.rpm()) > 8.0);
+        boolean propRunning = false;
+        for (ShipCtx.PropCtx p : ship.props()) {
+            if (p.active() && Math.abs(p.rpm()) > 8.0) {
+                propRunning = true;
+                break;
+            }
+        }
         // A parked ship resting on the ground shouldn't dust forever: require
         // movement or running machinery ("hovering" implies powered flight).
         if (ship.speedMs() < 0.5 && !propRunning) {

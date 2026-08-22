@@ -1,12 +1,14 @@
 package dev.levi.vaportrails.sable;
 
 import dev.levi.vaportrails.VTConfig;
+import dev.levi.vaportrails.fx.AirField;
 import dev.levi.vaportrails.fx.Budget;
 import dev.levi.vaportrails.fx.CloudPunchFx;
 import dev.levi.vaportrails.fx.EngineFx;
 import dev.levi.vaportrails.fx.HoverDustFx;
 import dev.levi.vaportrails.fx.PropellerFx;
 import dev.levi.vaportrails.fx.ShipCtx;
+import dev.levi.vaportrails.fx.ShockConeFx;
 import dev.levi.vaportrails.fx.WaterWakeFx;
 import dev.levi.vaportrails.fx.WingtipFx;
 import dev.ryanhcode.sable.api.sublevel.ClientSubLevelContainer;
@@ -41,6 +43,10 @@ final class SableTicker {
         ClientLevel level = mc.level;
         if (level != lastLevel) {
             STATES.clear();
+            // The particle engine is wiped on a level swap without running our
+            // removal hooks, so the live count has to be zeroed here too.
+            Budget.reset();
+            AirField.reset();
             lastLevel = level;
         }
         tickCount++;
@@ -98,16 +104,37 @@ final class SableTicker {
             if (VTConfig.DEBUG_MARKERS.get() && tickCount % 5 == 0) {
                 debugMarkers(level, ctx);
             }
+            publishSlipstream(ctx);
             // Propellers first: they draw from their own sub-budget and must
             // not be starved by the ambient effects.
             PropellerFx.tick(level, ctx, rng);
             WingtipFx.tick(level, ctx, rng);
+            ShockConeFx.tick(level, ctx, rng);
             EngineFx.tick(level, ctx, rng);
             HoverDustFx.tick(level, ctx, rng);
             WaterWakeFx.tick(level, ctx, rng);
             CloudPunchFx.tick(level, ctx, rng);
         }
         STATES.keySet().retainAll(SEEN);
+    }
+
+    /**
+     * A moving hull drags a envelope of air along with it. Publishing that as a
+     * wide, gentle jet keeps a ship's own wingtip trails and shock vapor
+     * streaming behind it rather than hanging in place.
+     */
+    private static void publishSlipstream(ShipCtx ctx) {
+        if (!VTConfig.AIRFLOW_ENABLED.get() || ctx.speedMs() < 4.0) {
+            return;
+        }
+        Vec3 dir = ctx.velocity().normalize();
+        double girth = Math.max(2.0,
+                Math.max(ctx.bounds().maxX - ctx.bounds().minX,
+                        ctx.bounds().maxZ - ctx.bounds().minZ) * 0.5);
+        double length = Math.min(48.0, girth * 4.0 + ctx.speedMs() * 0.4);
+        // Trails behind the hull, moving the same way the ship does.
+        AirField.addJet(ctx.center().subtract(dir.scale(girth)), dir,
+                ctx.velocity().length() * 0.30, girth, length, 0.0);
     }
 
     /** Tracking/detection proof: end-rod motes at ship centre, prop hubs and blade tips. */

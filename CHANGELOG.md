@@ -1,5 +1,52 @@
 # Changelog
 
+## 2.0.0 — 2026-08-21
+
+### Airflow simulation
+
+Propellers no longer just emit particles and forget about them. Each running
+prop now publishes its slipstream into a shared airflow field, and every Vapor
+Trails particle drifts through that field each tick. Prop wash actually blows
+nearby vapor, dust and foam around; a moving hull drags its own wingtip trails
+along behind it; and there's a slow ambient breeze (stronger in rain and
+storms) so long contrails disperse instead of hanging in straight lines.
+Wash cones carry a tangential swirl, so they curl rather than blow straight.
+
+Turn it off with `airflowSimulation = false` for the old static behaviour.
+
+### Shock cone
+
+New effect: past 40 m/s a condensation disc forms around the hull and gets
+dragged along with it, tightening and sliding aft as speed climbs.
+
+### Adaptive quality
+
+The mod now watches your frame rate and quietly thins effects out when you
+drop below `targetFps` (default 45), restoring them once there's headroom.
+Recovery is slower than cutback so density doesn't visibly pulse.
+
+### Bug fixes
+
+- **Prop wash blew the wrong way on every propeller.** Sable applies thrust as
+  `facing * getScaledThrust()`, and `getScaledThrust()` negates `getThrust()`
+  before scaling. That minus sign was missed, so the wash was drawn pointing
+  the way the ship is pushed rather than the way the air goes. Verified against
+  the decompiled formulas across all six facings, both rotation directions and
+  the reverse flag.
+- **Reversing a propeller didn't reverse its effects.** 1.0.2 replaced the
+  direction guess with a constant when thrust read zero, which pinned the wash
+  in place. Direction is now derived from signed thrust, with a rotation-based
+  fallback only while the prop is idle.
+- Propellers kicked up ground dust regardless of which way they pointed. A
+  horizontal cruise prop no longer sandblasts the ground beneath it, and the
+  dust ring is now centred where the slipstream actually lands, weakening and
+  spreading at glancing angles.
+- The live particle counter leaked on dimension changes, because the particle
+  engine is wiped without running removal hooks. Given enough portal trips the
+  counter would sit at the cap and silently refuse every effect.
+- Toggling cloud punch on mid-flight could fire one burst from a stale altitude.
+- Removed a per-tick stream allocation in the hover dust check.
+
 ## 1.0.2 — 2026-07-18
 
 - Propeller bearing (contraption) props now work properly: rotation speed is

@@ -1,5 +1,6 @@
 package dev.levi.vaportrails.particle;
 
+import dev.levi.vaportrails.fx.AirField;
 import dev.levi.vaportrails.fx.Budget;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
@@ -49,6 +50,13 @@ public class FoamParticle extends TextureSheetParticle {
     @Override
     public void tick() {
         super.tick();
+        // Foam is stuck to the surface: downwash pushes it outward, but it
+        // never gets lifted, so only the horizontal airflow applies.
+        if (!this.removed && !AirField.idle()) {
+            AirField.sample(this.x, this.y, this.z);
+            this.xd = AirField.drift(this.xd, AirField.outX(), 0.12);
+            this.zd = AirField.drift(this.zd, AirField.outZ(), 0.12);
+        }
         double bob = Math.sin((this.age + this.bobPhase) * 0.25) * 0.03;
         this.setPos(this.x, this.surfaceY + bob, this.z);
         this.yd = 0.0;

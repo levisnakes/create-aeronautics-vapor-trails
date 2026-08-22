@@ -1,5 +1,6 @@
 package dev.levi.vaportrails.particle;
 
+import dev.levi.vaportrails.fx.AirField;
 import dev.levi.vaportrails.fx.Budget;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
@@ -58,6 +59,13 @@ public class VaporParticle extends TextureSheetParticle {
     @Override
     public void tick() {
         super.tick();
+        // Condensation is light enough to be carried by the local airflow.
+        if (!this.removed && !AirField.idle()) {
+            AirField.sample(this.x, this.y, this.z);
+            this.xd = AirField.drift(this.xd, AirField.outX(), 0.22);
+            this.yd = AirField.drift(this.yd, AirField.outY(), 0.22);
+            this.zd = AirField.drift(this.zd, AirField.outZ(), 0.22);
+        }
         float t = (float) this.age / (float) this.lifetime;
         // Quick fade-in, slow fade-out; grows as it disperses.
         float in = Math.min(1.0f, t * 8.0f);

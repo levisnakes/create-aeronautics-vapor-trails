@@ -99,6 +99,36 @@ final class ShipState {
         }
     }
 
+    /**
+     * Plot-local unit vector along which a propeller pushes the ship.
+     *
+     * Sable applies propeller thrust as
+     * {@code blockDirection.getNormal() * getScaledThrust()}, and
+     * {@code getScaledThrust()} is {@code -getThrust() * airflowScaling *
+     * airPressure} - the two scalars are positive magnitudes, but the leading
+     * minus is easy to miss. So the ship is driven along the facing vector
+     * scaled by the NEGATED sign of {@code getThrust()}, and the air is driven
+     * the other way.
+     *
+     * {@code getThrust()} is itself signed by the shaft direction, the block's
+     * facing and its reverse setting, so reversing any of those flips this
+     * correctly. When it reads zero (an idle prop, or a bearing whose sails the
+     * client has not resolved yet) fall back to the rotation direction, which
+     * cannot see the reverse flag but only matters while nothing is moving.
+     */
+    private static Vec3 thrustLocal(Direction facing, double thrust, double rpm) {
+        Vec3 facingVec = new Vec3(facing.getStepX(), facing.getStepY(), facing.getStepZ());
+        double sign;
+        if (Math.abs(thrust) > 1.0e-6) {
+            sign = -Math.signum(thrust);
+        } else if (Math.abs(rpm) > 1.0e-6) {
+            sign = -Math.signum(rpm) * facing.getAxisDirection().getStep();
+        } else {
+            sign = 1.0;
+        }
+        return facingVec.scale(sign);
+    }
+
     /** World-space snapshot for the effect classes; null if the ship has no usable bounds yet. */
     ShipCtx buildCtx(ClientSubLevel sub) {
         BoundingBox3dc bb = sub.boundingBox();
@@ -128,23 +158,21 @@ final class ShipState {
                     .normalize();
             double rpm;
             boolean active = prop.isActive();
-            Vec3 washDir = null;
             if (Mods.AERONAUTICS && AeroCompat.isBearing(be)) {
-                // Bearing (contraption) props: the client BE's kinetic speed is
-                // unreliable, so read the contraption's angular speed, and take
-                // the wash direction straight from its thrust vector.
+                // Bearing (contraption) props: the client-side block entity's
+                // kinetic speed reads 0 while the contraption visibly spins, so
+                // take the speed from the contraption itself.
                 rpm = AeroCompat.bearingRpm(be);
                 active = active || AeroCompat.bearingSpinning(be);
-                Vec3 thrustLocal = AeroCompat.bearingThrustDir(be);
-                if (thrustLocal != null) {
-                    washDir = pose.transformNormal(thrustLocal).normalize().scale(-1.0);
-                }
             } else {
                 rpm = Mods.CREATE ? CreateCompat.rpm(be) : (prop.isActive() ? 96.0 : 0.0);
             }
+
+            double thrust = prop.getThrust();
+            Vec3 thrustDir = pose.transformNormal(thrustLocal(facing, thrust, rpm)).normalize();
             double radius = Mods.AERONAUTICS ? AeroCompat.radius(be) : 1.5;
-            props.add(new ShipCtx.PropCtx(worldPos, axis, radius, rpm, prop.getThrust(),
-                    active, washDir, propFx.get(plotPos)));
+            props.add(new ShipCtx.PropCtx(worldPos, axis, radius, rpm, thrust,
+                    active, thrustDir, propFx.get(plotPos)));
         }
 
         List<ShipCtx.EngineCtx> engines = engineBes.isEmpty() ? List.of() : new ArrayList<>(engineBes.size());

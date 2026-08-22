@@ -1,5 +1,6 @@
 package dev.levi.vaportrails;
 
+import dev.levi.vaportrails.fx.AirField;
 import dev.levi.vaportrails.fx.Budget;
 import dev.levi.vaportrails.sable.SableCompat;
 import net.minecraft.client.Minecraft;
@@ -23,6 +24,8 @@ public final class ClientEvents {
         if (!SableCompat.available()) {
             return;
         }
+        // Jets are rebuilt from scratch every tick; clear before anything adds.
+        AirField.beginTick(mc.level);
         Budget.tickStart(mc);
         SableCompat.tick(mc);
     }
@@ -30,6 +33,7 @@ public final class ClientEvents {
     private static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         SableCompat.reset();
         Budget.reset();
+        AirField.reset();
     }
 
     private ClientEvents() {}
