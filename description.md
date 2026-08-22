@@ -44,6 +44,6 @@ Every effect has its own toggle, an intensity slider, and its speed/RPM/altitude
 
 Particle counts are capped globally, per ship, and per propeller group, so a ten-prop gunship won't starve the wingtip and wake effects. On top of that the mod watches your frame rate and thins effects out on its own when you dip below target, easing them back once there's headroom. It respects the vanilla Decreased/Minimal particle settings and does zero work when no ships are loaded.
 
-Requires NeoForge 1.21.1 and Create Aeronautics (Sable). Without Sable installed the mod just sleeps, so it's safe to leave in any pack.
+Works on any NeoForge 21.1.x build, so it won't fight whatever version your pack or server pins. Requires Create Aeronautics (Sable). Without Sable installed the mod just sleeps, so it's safe to leave in any pack.
 
 MIT licensed. Not affiliated with the Create Aeronautics team.

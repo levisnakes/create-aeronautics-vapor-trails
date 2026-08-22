@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.3.1 — 2026-08-22
+
+### Runs on any NeoForge 21.1.x
+
+The mod declared `[21.1.233,)`, so it refused to load on anything older even
+though every API it uses has existed since the start of the 1.21.1 line. Packs
+and servers pin all sorts of 21.1.x builds, and this locked out most of them
+for no reason.
+
+The floor is now `[21.1.1,)`, and it is enforced rather than assumed: the mod
+compiles against 21.1.1 itself, so the compiler rejects any API a later build
+introduced. The compile target and the declared range are separate properties
+now, so bumping the dev target can no longer silently raise the requirement for
+users.
+
+Verify with `./gradlew compileJava -Pneo_version=21.1.1`.
+
+Other Minecraft versions remain out of scope: Sable and Create Aeronautics are
+both 1.21.1 only.
+
 ## 2.3.0 — 2026-08-22
 
 ### Wake turbulence

@@ -64,6 +64,28 @@ Rotation is part of the physics: angular velocity is recovered from the pose eac
 effects anchored away from the centre use `v + ω×r`, so a rolling ship's wingtips are rated on
 their own airspeed rather than the hull's.
 
+## Compatibility
+
+Runs on **any NeoForge 21.1.x** (the entire 1.21.1 line, from 21.1.1 onward). Packs and
+servers pin all sorts of builds, so the declared floor is deliberately as low as the code
+allows rather than whatever happened to be current when it was built.
+
+That floor is enforced, not assumed: the mod is *compiled* against 21.1.1, so the compiler
+rejects any API a later build introduced. To re-verify after changing code:
+
+```
+./gradlew compileJava -Pneo_version=21.1.1
+```
+
+If you want a newer client for day-to-day dev, override the same property
+(`./gradlew runClient -Pneo_version=21.1.240`) rather than editing `neo_version`, which would
+raise the floor for everyone.
+
+Other Minecraft versions are not possible: Sable and Create Aeronautics both ship for 1.21.1
+only. A Fabric build is technically conceivable (Sable has one) but Create Aeronautics is
+NeoForge-only, and it supplies the propellers - the headline effect - so a Fabric port would
+lose the reason to install this.
+
 ## Building
 
 ```
