@@ -13,12 +13,15 @@ import dev.ryanhcode.sable.companion.math.Pose3dc;
 import dev.ryanhcode.sable.sublevel.ClientSubLevel;
 import dev.ryanhcode.sable.sublevel.plot.LevelPlot;
 import dev.ryanhcode.sable.sublevel.plot.PlotChunkHolder;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Quaterniond;
+import org.joml.Quaterniondc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
@@ -48,6 +51,12 @@ final class ShipState {
     private boolean hasLast;
     private Vec3 velocity = Vec3.ZERO;
 
+    private final Quaterniond lastOrient = new Quaterniond();
+    private final Quaterniond spin = new Quaterniond();
+    private final Quaterniond inverse = new Quaterniond();
+    private boolean hasLastOrient;
+    private Vec3 angularVelocity = Vec3.ZERO;
+
     private final ShipFxState fxState = new ShipFxState();
     private final Map<BlockPos, PropFxState> propFx = new HashMap<>();
     private final Map<BlockPos, EngineFxState> engineFx = new HashMap<>();
@@ -63,9 +72,18 @@ final class ShipState {
         this.id = id;
     }
 
-    /** Update velocity every tick, even while culled, so re-entering range never spikes. */
+    /**
+     * Update linear and angular velocity every tick, even while culled, so
+     * re-entering range never spikes.
+     *
+     * This deliberately reads the LOGICAL pose: it advances exactly once per
+     * tick, so differencing it gives a clean per-tick velocity. The render pose
+     * is interpolated within the tick and would add jitter.
+     */
     void updateMotion(ClientSubLevel sub) {
-        Vector3dc pos = sub.logicalPose().position();
+        Pose3dc logical = sub.logicalPose();
+        updateSpin(logical.orientation());
+        Vector3dc pos = logical.position();
         if (hasLast) {
             double vx = pos.x() - lastPos.x;
             double vy = pos.y() - lastPos.y;
@@ -75,6 +93,44 @@ final class ShipState {
         }
         lastPos.set(pos);
         hasLast = true;
+    }
+
+    /**
+     * Angular velocity as an axis-angle vector in radians per tick, recovered
+     * from the rotation between this tick's orientation and the last.
+     *
+     * Without this every effect treats the hull as if it only translated, so a
+     * banking or spinning ship emits vapor as though its wingtips were moving
+     * at the speed of its centre of mass - which is exactly wrong for the
+     * manoeuvre that produces the most visible vapor.
+     */
+    private void updateSpin(Quaterniondc current) {
+        if (hasLastOrient) {
+            inverse.set(lastOrient).conjugate();
+            spin.set(current).mul(inverse);
+            // Take the shortest arc; q and -q are the same rotation.
+            double w = spin.w;
+            double x = spin.x;
+            double y = spin.y;
+            double z = spin.z;
+            if (w < 0.0) {
+                w = -w;
+                x = -x;
+                y = -y;
+                z = -z;
+            }
+            double sin = Math.sqrt(x * x + y * y + z * z);
+            double angle = 2.0 * Math.atan2(sin, w);
+            // A whole radian in one tick is a teleport or a re-assembly, not spin.
+            if (sin > 1.0e-9 && angle < 1.0) {
+                double scale = angle / sin;
+                angularVelocity = new Vec3(x * scale, y * scale, z * scale);
+            } else {
+                angularVelocity = Vec3.ZERO;
+            }
+        }
+        lastOrient.set(current);
+        hasLastOrient = true;
     }
 
     void maybeRescan(ClientSubLevel sub) {
@@ -173,7 +229,12 @@ final class ShipState {
         if (bb == null) {
             return null;
         }
-        Pose3dc pose = sub.logicalPose();
+        // Spawn positions follow the pose the ship is DRAWN at. Sable
+        // interpolates ships between network snapshots, so using the logical
+        // pose here leaves particles visibly trailing or leading the hull at
+        // speed.
+        Pose3dc pose = sub.renderPose();
+        float partialTick = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
         AABB bounds = bb.toMojang();
 
         List<ShipCtx.PropCtx> props = propBes.isEmpty() ? List.of() : new ArrayList<>(propBes.size());
@@ -206,11 +267,14 @@ final class ShipState {
                 rpm = Mods.CREATE ? CreateCompat.rpm(be) : (prop.isActive() ? 96.0 : 0.0);
             }
 
+            double bladeAngle = Mods.AERONAUTICS
+                    ? AeroCompat.bladeAngleRadians(be, partialTick)
+                    : Double.NaN;
             double thrust = prop.getThrust();
             Vec3 thrustDir = pose.transformNormal(thrustLocal(facing, thrust, rpm)).normalize();
             double radius = Mods.AERONAUTICS ? AeroCompat.radius(be) : 1.5;
             props.add(new ShipCtx.PropCtx(worldPos, axis, radius, rpm, thrust,
-                    active, thrustDir, propFx.get(plotPos)));
+                    active, thrustDir, bladeAngle, propFx.get(plotPos)));
         }
 
         List<ShipCtx.EngineCtx> engines = engineBes.isEmpty() ? List.of() : new ArrayList<>(engineBes.size());
@@ -232,7 +296,7 @@ final class ShipState {
                 pose.transformPosition(new Vec3(0.0, 1.0, 0.0)).subtract(originWorld),
                 pose.transformPosition(new Vec3(0.0, 0.0, 1.0)).subtract(originWorld));
 
-        return new ShipCtx(id, bounds.getCenter(), velocity, velocity.length() * 20.0,
-                bounds, frame, hullShape, props, engines, fxState);
+        return new ShipCtx(id, bounds.getCenter(), velocity, angularVelocity,
+                velocity.length() * 20.0, bounds, frame, hullShape, props, engines, fxState);
     }
 }

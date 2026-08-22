@@ -4,6 +4,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import dev.eriksonn.aeronautics.content.blocks.propeller.bearing.propeller_bearing.PropellerBearingBlockEntity;
 import dev.eriksonn.aeronautics.content.blocks.propeller.behaviour.PropellerActorBehaviour;
 import dev.eriksonn.aeronautics.content.blocks.propeller.small.BasePropellerBlockEntity;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
@@ -57,6 +58,28 @@ final class AeroCompat {
         return be instanceof PropellerBearingBlockEntity bearing
                 && bearing.getMovedContraption() != null
                 && Math.abs(bearing.getAngularSpeed()) > 1.0e-3f;
+    }
+
+    /**
+     * The propeller's actual rendered blade angle, in radians, or NaN when it
+     * cannot be read.
+     *
+     * Both propeller types store the angle in degrees and advance it by their
+     * own smoothed rotation speed each tick, which lags Create's raw kinetic
+     * speed through a 0.15 lerp. Integrating our own phase from the kinetic
+     * speed therefore runs ahead of the blades you can actually see during
+     * spin-up and spin-down, and drifts over time. Reading the angle the
+     * renderer uses keeps the vapor ring in step with the blades.
+     */
+    static double bladeAngleRadians(BlockEntity be, float partialTick) {
+        if (be instanceof PropellerBearingBlockEntity bearing) {
+            return Math.toRadians(bearing.getInterpolatedAngle(partialTick));
+        }
+        if (be instanceof BasePropellerBlockEntity small) {
+            float angle = Mth.lerp(partialTick, small.getPreviousAngle(), small.getAngle());
+            return Math.toRadians(angle);
+        }
+        return Double.NaN;
     }
 
     /** Distance from the hub block centre to the blade disc, along the facing. */

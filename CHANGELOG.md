@@ -1,5 +1,45 @@
 # Changelog
 
+## 2.2.0 — 2026-08-21
+
+### Effects follow the ship you can actually see
+
+Every spawn position was derived from the ship's logical pose, which advances
+once per tick. Sable draws ships at an interpolated render pose, so at speed
+particles were emitted slightly off the hull. Spawn positions now use the
+render pose; velocity is still differenced from the logical pose, which is the
+only one that ticks cleanly.
+
+### Rotation is now part of the physics
+
+The mod previously treated every hull as if it only translated. A rotating ship
+moves its extremities much faster than its centre of mass, so a banking
+aircraft's wingtips were being rated at hull speed. Angular velocity is now
+recovered from the orientation each tick, and effects anchored away from the
+centre use `v + omega x r`.
+
+Each wingtip is now gated on its own airspeed rather than the hull's, so a hard
+roll streams vapor from the rising tip while the other fades. For a 20-block
+wing rolling at 5 degrees/tick the tip moves 263% faster than the hull, which
+previously meant the difference between no vapor and heavy vapor.
+
+Blade-tip vapor, prop wash and the slipstream jets are all carried by their own
+local hull velocity too.
+
+### Blade rings track the real blades
+
+Blade phase was integrated from Create's raw kinetic speed. Aeronautics
+advances its own angle through a smoothed rotation speed, so our phase ran
+ahead of the visible blades during spin-up and drifted over time. The mod now
+reads the propeller's actual rendered angle (`getAngle`/`getInterpolatedAngle`),
+falling back to integration only when it is unavailable.
+
+Blade *count* is still a config value: Aeronautics does not expose it, and its
+sail list is not public, so reading it would mean reflecting into internals.
+
+Verified with `tools/SpinCheck.java` (13 checks over quaternion recovery,
+shortest-arc handling, teleport rejection and point velocity).
+
 ## 2.1.0 — 2026-08-21
 
 ### Real hull shapes

@@ -53,8 +53,13 @@ public final class PropellerFx {
             return;
         }
 
-        // Blade phase: Create visuals advance speed * 0.3 degrees per tick.
-        st.phase = (st.phase + Math.toRadians(prop.rpm() * 0.3)) % Mth.TWO_PI;
+        // Prefer the propeller's real rendered angle so the vapor ring turns in
+        // lockstep with the blades; only integrate our own phase as a fallback.
+        if (prop.hasBladeAngle()) {
+            st.phase = prop.bladeAngle();
+        } else {
+            st.phase = (st.phase + Math.toRadians(prop.rpm() * 0.3)) % Mth.TWO_PI;
+        }
 
         Vec3 u = FxUtil.perpendicular(prop.axis());
         Vec3 w = prop.axis().cross(u).normalize();
@@ -104,15 +109,16 @@ public final class PropellerFx {
             Vec3 tip = prop.pos().add(radial.scale(prop.radius()));
             // Tangential kick in the direction of rotation.
             Vec3 tangent = prop.axis().cross(radial).scale(Math.signum(prop.rpm()) * tipSpeed);
+            Vec3 carry = ship.velocityAt(tip);
             for (int i = 0; i < n; i++) {
                 double jx = (rng.nextDouble() - 0.5) * 0.15;
                 double jy = (rng.nextDouble() - 0.5) * 0.15;
                 double jz = (rng.nextDouble() - 0.5) * 0.15;
                 FxUtil.vapor(level, true,
                         tip.x + jx, tip.y + jy, tip.z + jz,
-                        tangent.x + ship.velocity().x * 0.15,
-                        tangent.y + ship.velocity().y * 0.15,
-                        tangent.z + ship.velocity().z * 0.15,
+                        tangent.x + carry.x * 0.15,
+                        tangent.y + carry.y * 0.15,
+                        tangent.z + carry.z * 0.15,
                         0.35f + rng.nextFloat() * 0.15f, 10 + rng.nextInt(8),
                         0.8f, 1.6f);
             }
@@ -125,7 +131,8 @@ public final class PropellerFx {
     private static void publishJet(ShipCtx ship, ShipCtx.PropCtx prop, Vec3 washDir, double rpm) {
         double frac = rpm / MAX_RPM;
         double speed = 0.12 + 0.40 * frac;
-        double length = (4.0 + 10.0 * frac) * (1.0 + Mth.clamp(ship.speedMs() / 30.0, 0.0, 1.0));
+        double length = (4.0 + 10.0 * frac)
+                * (1.0 + Mth.clamp(ship.speedMsAt(prop.pos()) / 30.0, 0.0, 1.0));
         double swirl = Math.signum(prop.rpm()) * 0.045 * frac;
         AirField.addJet(prop.pos(), washDir, speed, Math.max(0.6, prop.radius() * 0.9),
                 length, swirl);
@@ -147,7 +154,7 @@ public final class PropellerFx {
             // Slight outward flare gives the stream a cone shape.
             Vec3 vel = washDir.scale(washSpeed)
                     .add(offset.normalize().scale(0.015))
-                    .add(ship.velocity().scale(0.35));
+                    .add(ship.velocityAt(prop.pos()).scale(0.35));
             FxUtil.wash(level, true, start.x, start.y, start.z, vel.x, vel.y, vel.z,
                     0.55f + (float) (r / Math.max(0.5, prop.radius())) * 0.35f,
                     18 + rng.nextInt(16), 0.45f);

@@ -61,12 +61,11 @@ public final class WingtipFx {
             tipB = extremeCorner(ship.bounds(), ship.center(), wing, -1.0);
         }
 
-        double density = Mth.clamp((ship.speedMs() - minSpeed) / Math.max(minSpeed, 1.0), 0.0, 1.0);
         double humid = PropellerFx.humidityBoost(level, ship.center().y);
-        double rate = (2.5 + 3.0 * density) * humid * scale;
-
-        emitTip(level, ship, rng, tipA, dir, rate);
-        emitTip(level, ship, rng, tipB, dir, rate);
+        // Each tip is rated on ITS own airspeed. On a rolling ship one tip
+        // sweeps far faster than the hull, so it streams while the other fades.
+        emitTip(level, ship, rng, tipA, dir, minSpeed, humid, scale);
+        emitTip(level, ship, rng, tipB, dir, minSpeed, humid, scale);
     }
 
     /**
@@ -91,8 +90,14 @@ public final class WingtipFx {
     }
 
     private static void emitTip(ClientLevel level, ShipCtx ship, RandomSource rng,
-                                Vec3 tip, Vec3 dir, double rate) {
-        int n = FxUtil.count(rng, rate);
+                                Vec3 tip, Vec3 dir, double minSpeed, double humid, double scale) {
+        Vec3 tipVel = ship.velocityAt(tip);
+        double tipSpeed = tipVel.length() * 20.0;
+        if (tipSpeed < minSpeed) {
+            return;
+        }
+        double density = Mth.clamp((tipSpeed - minSpeed) / Math.max(minSpeed, 1.0), 0.0, 1.0);
+        int n = FxUtil.count(rng, (2.5 + 3.0 * density) * humid * scale);
         for (int i = 0; i < n; i++) {
             // Slightly aft of the tip, with a touch of jitter so the streak has body.
             double jx = (rng.nextDouble() - 0.5) * 0.5;
@@ -102,7 +107,7 @@ public final class WingtipFx {
             // The vapor mostly stays put in the air; the ship leaves it behind.
             FxUtil.vapor(level, false,
                     pos.x + jx, pos.y + jy, pos.z + jz,
-                    ship.velocity().x * 0.12, ship.velocity().y * 0.12, ship.velocity().z * 0.12,
+                    tipVel.x * 0.12, tipVel.y * 0.12, tipVel.z * 0.12,
                     0.65f + rng.nextFloat() * 0.4f,
                     60 + rng.nextInt(60),                     // 3-6 seconds
                     0.65f, 2.2f);
