@@ -29,6 +29,7 @@ without this mod on the other end — and your ships get the effects locally.
 | Cloud punch | Mist burst ring when crossing the cloud layer at speed (cloud height read from the client dimension) | `minVerticalSpeed` (5 m/s) |
 | Shock cone | Condensation disc around the hull at very high speed, tightening as it climbs | `minSpeed` (40 m/s) |
 | Wake turbulence | Counter-rotating vortices shed from the wingtips that linger ~20 s and tear apart anything flying through them | `lifetimeSeconds` (20) |
+| Assembly / disassembly | Outward dust ring and displaced air as a structure tears loose and becomes a ship; a heavier settling plume when one is taken apart | `triggerRange` (64) |
 
 Every effect has an enable flag and a 0.0–2.0 intensity multiplier. Config is client TOML
 (`config/vaportrails-client.toml`) and there's an in-game screen via Mods → Vapor Trails →
@@ -184,6 +185,11 @@ Drop the jar in a Create Aeronautics 1.21.1 NeoForge instance and check, roughly
 9c. **Banking trails**: roll hard at moderate speed → the rising wingtip should stream while
     the falling one fades. Both tips streaming equally means angular velocity isn't reaching
     the effect.
+9d. **Assembly**: assemble a ship while standing next to it → one outward dust ring along the
+    ground plus dust falling from the underside. Disassemble it → a heavier, slower settling
+    plume. Neither should repeat while the ship simply flies.
+9e. **No false assemblies**: fly away until a ship unloads, then fly back → it must reload
+    *silently*. A dust burst on reload means the seen-id check is not working.
 10. **Graceful absence**: same jar in a plain NeoForge instance (no Sable) → log line
     `Sable not installed - vapor trail effects idle.`, no crash, config screen still opens.
 11. **Compat**: with Sodium/Embeddium + Iris/Oculus shaders and "Separate Sable Render

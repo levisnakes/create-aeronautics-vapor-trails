@@ -1,5 +1,38 @@
 # Changelog
 
+## 2.4.0 — 2026-08-22
+
+### Assembly and disassembly
+
+Every other effect only exists once a ship is already flying. This one covers
+the moment every airship player is guaranteed to experience, standing right
+next to it: the instant a structure tears loose of the ground and becomes a
+ship.
+
+Assembly reads as a release of pressure - the ground under the hull blows
+outward in a ring of block-appropriate dust, debris shakes loose from the
+underside as it separates, and displaced air rolls off it. Disassembly is the
+opposite shape: heavier and slower, settling rather than blasting.
+
+Both are one-shot set pieces sized to the ship. Nothing here repeats during
+normal flight.
+
+Telling a real assembly from a ship that merely streamed into view takes two
+signals, because Sable's finalize packet fires for both: a reloaded ship keeps
+its UUID while a freshly assembled one gets a new one, and an assembly happens
+near a player because somebody had to trigger it. Disassembly needs no
+guesswork - Sable reports `REMOVED` for a ship that was taken apart and
+`UNLOADED` for one that just left range, so flying away from a ship never fires
+a plume.
+
+Observer callbacks run inside Sable's own code, so they are fully guarded: a
+stray exception from a cosmetic mod must never take the game down.
+
+New config section `assembly`: `enabled`, `intensity` and `triggerRange` (64).
+
+Verified with `tools/AssemblyCheck.java`: 18 checks over assembly detection,
+reload suppression, unload-vs-removal, and the bounded id memory.
+
 ## 2.3.1 — 2026-08-22
 
 ### Runs on any NeoForge 21.1.x

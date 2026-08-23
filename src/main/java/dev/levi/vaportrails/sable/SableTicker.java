@@ -2,6 +2,7 @@ package dev.levi.vaportrails.sable;
 
 import dev.levi.vaportrails.VTConfig;
 import dev.levi.vaportrails.fx.AirField;
+import dev.levi.vaportrails.fx.AssemblyFx;
 import dev.levi.vaportrails.fx.Budget;
 import dev.levi.vaportrails.fx.CloudPunchFx;
 import dev.levi.vaportrails.fx.EngineFx;
@@ -37,6 +38,8 @@ import java.util.UUID;
 final class SableTicker {
 
     private static final Map<UUID, ShipState> STATES = new HashMap<>();
+    private static final SubLevelWatcher WATCHER = new SubLevelWatcher();
+    private static SubLevelContainer observedContainer;
     private static final Set<UUID> SEEN = new HashSet<>();
     private static ClientLevel lastLevel;
     private static int tickCount;
@@ -50,6 +53,9 @@ final class SableTicker {
             Budget.reset();
             AirField.reset();
             WakeField.reset();
+            AssemblyFx.reset();
+            WATCHER.forget();
+            observedContainer = null;
             lastLevel = level;
         }
         tickCount++;
@@ -59,11 +65,23 @@ final class SableTicker {
             STATES.clear();
             return;
         }
+        // Attach once per container so assemblies and disassemblies are
+        // reported to us rather than inferred from a diff (which could not
+        // tell a disassembly from a ship simply unloading).
+        if (container != observedContainer) {
+            container.addObserver(WATCHER);
+            observedContainer = container;
+        }
         List<ClientSubLevel> subs = container.getAllSubLevels();
         if (subs.isEmpty()) {
-            // No physics objects loaded: skip all work.
+            // No physics objects loaded: skip all work, except any one-shot
+            // event still playing out from a ship that just came apart.
             if (!STATES.isEmpty()) {
                 STATES.clear();
+            }
+            if (AssemblyFx.busy()) {
+                Budget.beginShip();
+                AssemblyFx.tick(level, level.random);
             }
             return;
         }
@@ -122,6 +140,13 @@ final class SableTicker {
             WakeTurbulenceFx.tick(level, ctx, rng);
         }
         STATES.keySet().retainAll(SEEN);
+
+        // One-shot assembly bursts get their own budget slice: the ship they
+        // belong to may not exist any more.
+        if (AssemblyFx.busy()) {
+            Budget.beginShip();
+            AssemblyFx.tick(level, rng);
+        }
     }
 
     /**
@@ -182,6 +207,9 @@ final class SableTicker {
     static void reset() {
         STATES.clear();
         lastLevel = null;
+        observedContainer = null;
+        WATCHER.forget();
+        AssemblyFx.reset();
     }
 
     private SableTicker() {}

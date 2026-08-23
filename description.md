@@ -4,6 +4,12 @@ Particle effects for Create Aeronautics ships. Propellers get vapor rings at the
 
 **Client-side only. Works on any server.** Nothing to install on the server, no packets sent. If the pack has Aeronautics, you get the effects.
 
+## You'll notice it before you even take off
+
+Assemble a ship and the ground under it blows outward in a ring of dust while debris shakes loose from the hull as it tears free. Take one apart and it drops back into the world under a heavy settling plume.
+
+It fires once, when it should, and never repeats while you're just flying around.
+
 ## Propeller effects
 
 This is the main feature. Almost every Aeronautics ship is covered in propellers and in vanilla they just silently spin.

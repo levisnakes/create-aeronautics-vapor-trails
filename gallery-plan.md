@@ -45,3 +45,10 @@ Tips:
 8. **[Image] Banking wingtip asymmetry.** Hard roll at moderate speed, camera slightly ahead and
    below. The rising tip should be streaming heavily while the falling tip is nearly clean —
    that asymmetry is what sells the physics to anyone who flies.
+
+9. **[GIF — strong candidate for the thumbnail] Assembly lift-off.** Stand beside a decent-sized
+   airship and assemble it. Capture the ring of ground dust punching outward and the debris
+   shaking off the underside as it breaks free. This is the single most valuable clip in the
+   set: it is the first thing a new user will see after installing, it happens at close range
+   where detail reads well, and it needs no flying skill to film. Shoot from ground level,
+   slightly to one side, with the horizon low so the dust ring is silhouetted.

@@ -19,6 +19,11 @@ public final class VTConfig {
     public static final ModConfigSpec.BooleanValue AIRFLOW_ENABLED;
     public static final ModConfigSpec.BooleanValue HULL_SHAPE;
 
+    // ---- assembly / disassembly ----
+    public static final ModConfigSpec.BooleanValue ASSEMBLY_ENABLED;
+    public static final ModConfigSpec.DoubleValue ASSEMBLY_INTENSITY;
+    public static final ModConfigSpec.IntValue ASSEMBLY_RANGE;
+
     // ---- wake turbulence ----
     public static final ModConfigSpec.BooleanValue WAKE_TURB_ENABLED;
     public static final ModConfigSpec.DoubleValue WAKE_TURB_LIFETIME;
@@ -159,6 +164,20 @@ public final class VTConfig {
         WAKE_MIN_SPEED = b.comment("Minimum ship speed for a wake (m/s).")
                 .defineInRange("minSpeed", 2.0, 0.5, 40.0);
         WAKE_INTENSITY = b.defineInRange("intensity", 1.0, 0.0, 2.0);
+        b.pop();
+
+        b.push("assembly");
+        ASSEMBLY_ENABLED = b.comment(
+                        "A burst of displaced air and ground dust when a structure tears",
+                        "loose and becomes a ship, and a heavier settling plume when one is",
+                        "taken apart. One-shot: nothing here repeats during normal flight.")
+                .define("enabled", true);
+        ASSEMBLY_INTENSITY = b.defineInRange("intensity", 1.0, 0.0, 2.0);
+        ASSEMBLY_RANGE = b.comment(
+                        "How close you must be for an assembly to register (blocks).",
+                        "Ships appearing beyond this are streaming into view rather than",
+                        "being built, and would be too far away to see anyway.")
+                .defineInRange("triggerRange", 64, 8, 256);
         b.pop();
 
         b.push("wakeTurbulence");
